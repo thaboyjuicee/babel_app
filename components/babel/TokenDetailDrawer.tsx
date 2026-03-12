@@ -1,0 +1,104 @@
+"use client";
+
+import { Copy } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { MomentumBadge } from "@/components/babel/MomentumBadge";
+import { ScoreBadge } from "@/components/babel/ScoreBadge";
+import { SparklineChart } from "@/components/babel/SparklineChart";
+import { formatCompactNumber, shortAddress } from "@/lib/utils/format";
+import type { RankedToken } from "@/types/babel";
+
+type TokenDetailDrawerProps = {
+  token: RankedToken | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+const breakdownLabels: Array<{ key: keyof RankedToken["scoreBreakdown"]; label: string }> = [
+  { key: "buyerGrowth", label: "Buyer Growth" },
+  { key: "tradeVolumeMomentum", label: "Trade/Volume Momentum" },
+  { key: "acceleration", label: "Acceleration" },
+  { key: "ageRelativeStrength", label: "Age Relative Strength" },
+  { key: "stabilityQuality", label: "Stability / Quality" },
+];
+
+export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDrawerProps) {
+  async function copyAddress(value: string) {
+    await navigator.clipboard.writeText(value);
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent>
+        {!token ? null : (
+          <div className="h-full overflow-y-auto pr-1">
+            <div className="mb-5 border-b border-white/[0.06] pb-4">
+              <SheetTitle className="text-2xl font-bold tracking-tight text-white">{token.name}</SheetTitle>
+              <p className="mt-1 text-sm text-white/45">{token.symbol} · {Math.round(token.ageMinutes)}m old</p>
+              <div className="mt-2">
+                <MomentumBadge label={token.momentumLabel} />
+              </div>
+            </div>
+
+            <section className="mb-6 rounded-xl border border-white/[0.06] bg-[#12121A] p-4">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-white/35">Babel Score</p>
+              <div className="mt-2 flex items-end justify-between">
+                <ScoreBadge score={token.babelScore} />
+                <div className="text-right text-xs text-white/50">
+                  <div>Rank #{token.rank}</div>
+                  <div>Prev #{token.previousRank ?? token.rank}</div>
+                  <div>Floors moved {token.rankDelta > 0 ? `+${token.rankDelta}` : token.rankDelta}</div>
+                </div>
+              </div>
+              <p className="mt-3 text-sm text-white/55">{token.whyRanked}</p>
+              <div className="mt-4 rounded-lg border border-white/[0.06] bg-[#0F0F16] p-2">
+                <SparklineChart points={token.trend} width={340} height={80} />
+              </div>
+            </section>
+
+            <section className="mb-6 rounded-xl border border-white/[0.06] bg-[#12121A] p-4">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-white/35">Score Breakdown</p>
+              <div className="mt-3 space-y-2.5">
+                {breakdownLabels.map((item) => {
+                  const value = token.scoreBreakdown[item.key];
+                  return (
+                    <div key={item.key}>
+                      <div className="mb-1 flex items-center justify-between text-xs text-white/55">
+                        <span>{item.label}</span>
+                        <span>{value.toFixed(1)}</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-white/[0.05]">
+                        <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500" style={{ width: `${Math.max(8, value)}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-white/[0.06] bg-[#12121A] p-4">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-white/35">Activity</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded-lg border border-white/[0.05] p-2 text-white/70">Vol: <span className="text-white">{formatCompactNumber(token.metrics.volume)}</span></div>
+                <div className="rounded-lg border border-white/[0.05] p-2 text-white/70">Trades: <span className="text-white">{formatCompactNumber(token.metrics.tradeCount)}</span></div>
+                <div className="rounded-lg border border-white/[0.05] p-2 text-white/70">Buyers: <span className="text-white">{formatCompactNumber(token.metrics.buyerCount)}</span></div>
+                <div className="rounded-lg border border-white/[0.05] p-2 text-white/70">Fees: <span className="text-white">{formatCompactNumber(token.metrics.feeValue)}</span></div>
+              </div>
+
+              <div className="mt-4 space-y-2 text-xs text-white/55">
+                <button className="flex w-full items-center justify-between rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono" onClick={() => copyAddress(token.mint)}>
+                  <span>Mint: {shortAddress(token.mint)}</span>
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+                <button className="flex w-full items-center justify-between rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono" onClick={() => copyAddress(token.creator)}>
+                  <span>Creator: {shortAddress(token.creator)}</span>
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}

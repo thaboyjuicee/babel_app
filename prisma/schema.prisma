@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Token {
+  id          String          @id @default(cuid())
+  mint        String          @unique
+  name        String
+  symbol      String
+  creator     String
+  createdAt   DateTime
+  metadata    Json?
+  snapshots   TokenSnapshot[]
+  rankings    TokenRanking[]
+  insertedAt  DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([createdAt])
+}
+
+model TokenSnapshot {
+  id         String   @id @default(cuid())
+  tokenId    String
+  token      Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  capturedAt DateTime
+  price      Float
+  volume     Float
+  tradeCount Int
+  buyerCount Int
+  feeValue   Float
+  rawData    Json?
+
+  @@index([tokenId, capturedAt])
+}
+
+model TokenRanking {
+  id            String   @id @default(cuid())
+  tokenId        String
+  token          Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  bucket         String
+  babelScore     Float
+  rank           Int
+  previousRank   Int?
+  rankDelta      Int
+  momentumLabel  String
+  computedAt     DateTime
+
+  @@index([bucket, rank])
+  @@index([tokenId, computedAt])
+}
