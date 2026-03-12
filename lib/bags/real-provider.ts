@@ -110,6 +110,7 @@ export function normalizeToken(raw: Record<string, unknown>): BagsTokenRaw | nul
       unwrapped?.revenue,
     ),
     hasLiveActivity: false,
+    logoUri: toStringValue(unwrapped?.logoUri || unwrapped?.image || unwrapped?.imageUrl || unwrapped?.logo),
   };
 }
 
@@ -215,6 +216,7 @@ export class RealBagsProvider implements BagsDataProvider {
           buyerCount: dex.txBuys24h,
           feeValue: dex.volume24h * 0.01,
           hasLiveActivity: true,
+          logoUri: dex.logoUri || t.logoUri,
         };
       });
 

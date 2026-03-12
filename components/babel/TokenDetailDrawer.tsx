@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Copy } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -92,8 +93,27 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
         {!token ? null : (
           <div className="h-full overflow-y-auto pr-1">
             <div className="mb-5 border-b border-white/[0.06] pb-4">
-              <SheetTitle className="text-xl font-bold tracking-tight text-white sm:text-2xl">{token.name}</SheetTitle>
-              <p className="mt-1 text-xs text-white/45 sm:text-sm">{token.symbol} · {Math.round(token.ageMinutes)}m old</p>
+              <div className="flex items-center gap-3">
+                {token.logoUri ? (
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-white/[0.10] bg-white/[0.04]">
+                    <Image
+                      src={token.logoUri}
+                      alt={token.symbol}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/[0.10] bg-white/[0.04] text-sm font-bold uppercase text-white/40">
+                    {token.symbol.slice(0, 2)}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <SheetTitle className="text-xl font-bold tracking-tight text-white sm:text-2xl">{token.name}</SheetTitle>
+                  <p className="mt-1 text-xs text-white/45 sm:text-sm">{token.symbol} · {Math.round(token.ageMinutes)}m old</p>
+                </div>
+              </div>
               <div className="mt-2">
                 <MomentumBadge label={token.momentumLabel} />
               </div>

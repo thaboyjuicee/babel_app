@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { MomentumBadge } from "@/components/babel/MomentumBadge";
@@ -83,6 +84,22 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
         ) : null}
 
           <div className={cn("grid min-w-0 shrink-0 place-items-center rounded-md text-[10px] font-semibold sm:text-[11px]", rankBadgeSize, rankBadgeTone)}>#{token.rank}</div>
+
+            {token.logoUri ? (
+              <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-white/[0.08] bg-white/[0.04]">
+                <Image
+                  src={token.logoUri}
+                  alt={token.symbol}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-[9px] font-bold uppercase text-white/40">
+                {token.symbol.slice(0, 2)}
+              </div>
+            )}
 
             <div className="min-w-0 flex-1 text-left">
             <div className="truncate text-[12px] font-semibold tracking-tight text-white/90 sm:text-sm">

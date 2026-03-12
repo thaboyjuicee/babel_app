@@ -148,6 +148,7 @@ export function computeBabelRankings(tokens: BagsTokenRaw[], historic: HistoricM
         price: token.price,
       },
       hasLiveActivity: token.hasLiveActivity,
+      logoUri: token.logoUri,
       trend,
       scoreBreakdown: breakdown,
       computedAt: new Date().toISOString(),

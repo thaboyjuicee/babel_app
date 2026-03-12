@@ -77,6 +77,7 @@ export type RankedToken = {
     price: number;
   };
   hasLiveActivity: boolean;
+  logoUri?: string;
   trend: number[];
   scoreBreakdown: ScoreBreakdown;
   computedAt: string;
@@ -94,6 +95,7 @@ export type BagsTokenRaw = {
   buyerCount: number;
   feeValue: number;
   hasLiveActivity: boolean;
+  logoUri?: string;
 };
 
 export type TowerResponse = {

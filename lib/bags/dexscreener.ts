@@ -16,6 +16,7 @@ export type DexEnrichment = {
   txBuys1h: number;
   txSells24h: number;
   liquidity: number;
+  logoUri: string;
 };
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -69,6 +70,9 @@ export async function dexScreenerEnrich(
               | Record<string, Record<string, number>>
               | undefined;
 
+            const info = pair?.info as Record<string, unknown> | undefined;
+            const logoUri = String(info?.imageUrl ?? "");
+
             result.set(mint, {
               name: baseToken?.name ?? "",
               symbol: baseToken?.symbol ?? "",
@@ -81,6 +85,7 @@ export async function dexScreenerEnrich(
               txBuys1h: txns?.h1?.buys ?? 0,
               txSells24h: txns?.h24?.sells ?? 0,
               liquidity,
+              logoUri,
             });
           }
         } catch (err) {
