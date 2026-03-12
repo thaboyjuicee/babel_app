@@ -11,8 +11,20 @@ const getCachedTower = unstable_cache(
 export async function getHomeData(defaultBucket: AgeBucket = "1h") {
   const entries = await Promise.all(
     AGE_BUCKETS.map(async (bucket) => {
-      const data = await getCachedTower(bucket.key);
-      return [bucket.key, data] as const;
+      try {
+        const data = await getCachedTower(bucket.key);
+        return [bucket.key, data] as const;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        const empty: TowerResponse = {
+          bucket: bucket.key,
+          updatedAt: new Date().toISOString(),
+          tokens: [],
+          source: "real",
+          error: errorMessage,
+        };
+        return [bucket.key, empty] as const;
+      }
     }),
   );
 

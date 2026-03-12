@@ -99,4 +99,5 @@ export type TowerResponse = {
   updatedAt: string;
   tokens: RankedToken[];
   source: "mock" | "real";
+  error?: string;
 };
