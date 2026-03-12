@@ -31,7 +31,7 @@ export function SparklineChart({ points, width = 120, height = 32 }: SparklinePr
   const endY = normalizeY(points[points.length - 1]);
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-hidden">
       <defs>
         <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor={stroke} stopOpacity="0.18" />
