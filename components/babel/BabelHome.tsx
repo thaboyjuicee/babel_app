@@ -25,6 +25,8 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
 
   const apiError = current.error ?? null;
   const [isStale, setIsStale] = useState(false);
+  const isDatabaseWarning = typeof apiError === "string" && apiError.includes("Database persistence unavailable");
+  const isBagsWarning = typeof apiError === "string" && !isDatabaseWarning;
 
   useEffect(() => {
     const parsed = Date.parse(current.updatedAt);
@@ -84,12 +86,20 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
           <div className="mt-4 rounded-xl border border-rose-500/20 bg-rose-500/[0.06] p-5">
             <p className="text-sm font-semibold text-rose-400">Service warning</p>
             <p className="mt-1 text-xs text-white/50">{apiError}</p>
-            <p className="mt-2 text-xs text-white/35">
-              Check your <code className="rounded bg-white/[0.06] px-1">BAGS_API_KEY</code> and{" "}
-              <code className="rounded bg-white/[0.06] px-1">BAGS_API_TOKENS_PATH</code> in{" "}
-              <code className="rounded bg-white/[0.06] px-1">.env.local</code>, then restart the server.
-              Use <code className="rounded bg-white/[0.06] px-1">/api/debug/probe</code> to test your API key.
-            </p>
+            {isDatabaseWarning ? (
+              <p className="mt-2 text-xs text-white/35">
+                Check that <code className="rounded bg-white/[0.06] px-1">DATABASE_URL</code> points to a running
+                Railway Postgres instance and that the database service is up. Your app can still render data from the latest
+                snapshot without persistence.
+              </p>
+            ) : isBagsWarning ? (
+              <p className="mt-2 text-xs text-white/35">
+                Check your <code className="rounded bg-white/[0.06] px-1">BAGS_API_KEY</code> and{" "}
+                <code className="rounded bg-white/[0.06] px-1">BAGS_API_TOKENS_PATH</code> in{" "}
+                <code className="rounded bg-white/[0.06] px-1">.env.local</code>, then restart the server.
+                Use <code className="rounded bg-white/[0.06] px-1">/api/debug/probe</code> to test your API key.
+              </p>
+            ) : null}
           </div>
         ) : null}
 
