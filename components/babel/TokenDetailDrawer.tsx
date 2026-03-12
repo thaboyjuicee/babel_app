@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Copy } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MomentumBadge } from "@/components/babel/MomentumBadge";
@@ -23,8 +24,36 @@ const breakdownLabels: Array<{ key: keyof RankedToken["scoreBreakdown"]; label: 
 ];
 
 export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDrawerProps) {
-  async function copyAddress(value: string) {
-    await navigator.clipboard.writeText(value);
+  const [copied, setCopied] = useState<"mint" | "creator" | null>(null);
+
+  async function copyAddress(value: string, target: "mint" | "creator") {
+    try {
+      if (!value) return;
+
+      if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = value;
+        textarea.setAttribute("readonly", "true");
+        textarea.style.position = "absolute";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const didCopy = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        if (!didCopy) {
+          throw new Error("Clipboard write failed");
+        }
+      }
+
+      setCopied(target);
+      setTimeout(() => setCopied((current) => (current === target ? null : current)), 1200);
+    } catch (error) {
+      console.error("Copy failed", error);
+      alert("Copy failed. You can copy manually from the value shown.");
+    }
   }
 
   return (
@@ -86,13 +115,29 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
               </div>
 
               <div className="mt-4 space-y-2 text-xs text-white/55">
-                <button className="flex w-full items-center justify-between rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono" onClick={() => copyAddress(token.mint)}>
+                <button
+                  className="flex w-full items-center justify-between rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono"
+                  onClick={() => copyAddress(token.mint, "mint")}
+                  type="button"
+                >
                   <span>Mint: {shortAddress(token.mint)}</span>
-                  <Copy className="h-3.5 w-3.5" />
+                  {copied === "mint" ? (
+                    <span className="text-[10px] font-semibold text-emerald-300">Copied</span>
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                 </button>
-                <button className="flex w-full items-center justify-between rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono" onClick={() => copyAddress(token.creator)}>
+                <button
+                  className="flex w-full items-center justify-between rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono"
+                  onClick={() => copyAddress(token.creator, "creator")}
+                  type="button"
+                >
                   <span>Creator: {shortAddress(token.creator)}</span>
-                  <Copy className="h-3.5 w-3.5" />
+                  {copied === "creator" ? (
+                    <span className="text-[10px] font-semibold text-emerald-300">Copied</span>
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
                 </button>
               </div>
             </section>
