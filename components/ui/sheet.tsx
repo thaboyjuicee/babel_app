@@ -19,7 +19,7 @@ export function SheetContent({
       <Dialog.Overlay className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm" />
       <Dialog.Content
         className={cn(
-          "fixed right-0 top-0 z-[80] h-full w-full max-w-xl border-l border-white/[0.08] bg-[#16161F] p-6 shadow-2xl outline-none",
+          "fixed right-0 top-0 z-[80] h-full w-full max-w-xl border-l border-white/[0.08] bg-[#16161F] p-4 shadow-2xl outline-none sm:p-6",
           className,
         )}
         {...props}

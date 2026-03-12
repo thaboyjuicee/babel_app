@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MomentumBadge } from "@/components/babel/MomentumBadge";
@@ -25,6 +25,18 @@ const breakdownLabels: Array<{ key: keyof RankedToken["scoreBreakdown"]; label: 
 
 export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDrawerProps) {
   const [copied, setCopied] = useState<"mint" | "creator" | null>(null);
+  const [sparklineWidth, setSparklineWidth] = useState(280);
+  const isCompactChart = sparklineWidth < 280;
+
+  useEffect(() => {
+    const update = () => {
+      const available = Math.max(220, window.innerWidth - 86);
+      setSparklineWidth(Math.min(340, available));
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   async function copyAddress(value: string, target: "mint" | "creator") {
     try {
@@ -81,7 +93,7 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
               </div>
               <p className="mt-3 text-sm text-white/55">{token.whyRanked}</p>
               <div className="mt-4 rounded-lg border border-white/[0.06] bg-[#0F0F16] p-2">
-                <SparklineChart points={token.trend} width={340} height={80} />
+                <SparklineChart points={token.trend} width={sparklineWidth} height={isCompactChart ? 64 : 80} />
               </div>
             </section>
 

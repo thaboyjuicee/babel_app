@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import type { RankedToken } from "@/types/babel";
 import { TowerBlock } from "@/components/babel/TowerBlock";
 import { EmptyState } from "@/components/babel/EmptyState";
@@ -18,31 +19,48 @@ export function TowerView({ tokens, selectedId, onSelect }: TowerViewProps) {
   const towerHeight = tokens.slice(0, 12).length;
 
   return (
-    <div className="space-y-0.5 rounded-2xl border border-white/[0.05] bg-[#12121A] px-2 py-2.5 sm:p-4">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      className="space-y-0.5 rounded-2xl border border-white/[0.05] bg-[#12121A] px-2 py-2.5 sm:p-4"
+    >
       <div className="mb-2 flex items-center justify-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-200">
+        <motion.span
+          initial={{ scale: 0.94, opacity: 0.7 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-200"
+        >
           Apex
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-        </span>
+        </motion.span>
       </div>
 
-      {tokens.slice(0, 12).map((token, index) => (
-        <TowerBlock
-          key={token.id}
-          token={token}
-          index={index}
-          total={Math.min(tokens.length, 12)}
-          selected={selectedId === token.id}
-          onClick={() => onSelect(token)}
-        />
-      ))}
+      <AnimatePresence mode="popLayout">
+        {tokens.slice(0, 12).map((token, index) => (
+          <TowerBlock
+            key={token.id}
+            token={token}
+            index={index}
+            total={Math.min(tokens.length, 12)}
+            selected={selectedId === token.id}
+            onClick={() => onSelect(token)}
+          />
+        ))}
+      </AnimatePresence>
 
       <div className="mt-2 flex items-center justify-center">
-        <span className={`inline-flex items-center gap-2 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${towerHeight >= 12 ? "text-amber-300/85" : "text-white/70"}`}>
+        <motion.span
+          initial={{ scale: 0.94, opacity: 0.7 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className={`inline-flex items-center gap-2 rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${towerHeight >= 12 ? "text-amber-300/85" : "text-white/70"}`}
+        >
           Foundation
           <span className="h-1.5 w-1.5 rounded-full bg-amber-200" />
-        </span>
+        </motion.span>
       </div>
-    </div>
+    </motion.div>
   );
 }

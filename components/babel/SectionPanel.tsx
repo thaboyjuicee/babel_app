@@ -56,7 +56,7 @@ export function SectionPanel({
               </div>
             </div>
 
-            <div className="ml-2 text-right">
+            <div className="ml-2 min-w-[84px] text-right sm:min-w-0">
               <div className={cn(
                 "inline-flex rounded-md px-2 py-0.5 text-xs font-semibold",
                 token.rankDelta > 0 ? "bg-emerald-400/10 text-emerald-400" : "bg-rose-400/10 text-rose-400",

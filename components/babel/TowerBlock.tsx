@@ -37,24 +37,40 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
   const rankBadgeTone = token.rank === 1 ? "bg-gradient-to-br from-cyan-400 to-blue-500 text-white" : "bg-white/[0.05] text-white/70";
 
   const isTop = token.rank <= 3;
-  const glowStyle = isTop || selected ? { boxShadow: `0 0 26px ${MOMENTUM_COLORS[token.momentumLabel].glow}` } : undefined;
+  const glowStyle = isTop || selected ? `0 0 26px ${MOMENTUM_COLORS[token.momentumLabel].glow}` : "none";
   const selectedGlow = selected ? `0 0 32px ${MOMENTUM_COLORS[token.momentumLabel].glow}, 0 0 56px ${MOMENTUM_COLORS[token.momentumLabel].glow}` : undefined;
-  const baseGlowStyle = selected ? { ...glowStyle, boxShadow: selectedGlow } : glowStyle;
+  const baseGlowStyle = selected ? selectedGlow ?? glowStyle : glowStyle;
+  const delay = Math.min(index, 11) * 0.055;
 
   return (
     <div className="w-full">
       <motion.button
         type="button"
-        initial={{ opacity: 0, scaleX: 0.4, y: -8 }}
-        animate={{ opacity, scaleX: 1, y: 0 }}
-        transition={{ delay: index * 0.045, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-        whileHover={{ scale: 1.02, y: -2 }}
+        layout
+        initial={{ opacity: 0, y: -12, scale: 0.985 }}
+        animate={{
+          opacity,
+          y: selected ? -1 : 0,
+          scale: selected ? 1.015 : 1,
+          boxShadow: baseGlowStyle,
+        }}
+        exit={{ opacity: 0, y: 8, scale: 0.98 }}
+        transition={{
+          delay,
+          duration: 0.48,
+          ease: [0.16, 1, 0.3, 1],
+          layout: { duration: 0.32, ease: [0.16, 1, 0.3, 1] },
+        }}
+        whileHover={{
+          scale: 1.025,
+          y: -3,
+          boxShadow: selectedGlow ?? "0 0 24px rgba(56,189,248,0.22)",
+        }}
         whileTap={{ scale: 0.99, y: 0 }}
-        style={{ width: `${width}%`, height, ...baseGlowStyle }}
+        style={{ width: `${width}%`, height, boxShadow: baseGlowStyle }}
         onClick={onClick}
         className={cn(
-          "group relative mx-auto flex origin-center items-center gap-1 rounded-md border px-1 py-1 transition",
-          "sm:gap-2 sm:px-2 sm:py-1.5",
+          "group relative mx-auto flex w-full min-w-0 origin-center items-center gap-1 rounded-md border px-2 py-1.5 transition sm:px-2 sm:py-1.5",
           token.rank <= 3 ? "bg-[#16161F]" : "bg-[#111119]",
           selected ? "border-cyan-300/70 shadow-[0_0_20px_rgba(56,189,248,0.28)]" : "border-white/[0.06] hover:border-white/[0.16]",
           selected ? "ring-2 ring-cyan-300/55" : null,
@@ -73,7 +89,7 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
               {token.name}
               {showSymbol ? <span className="ml-1 text-white/40 sm:text-sm">{token.symbol}</span> : null}
             </div>
-            <div className="mt-0.5 flex items-center gap-2">
+            <div className="mt-0.5 flex items-center justify-between gap-2">
               <MomentumBadge label={token.momentumLabel} />
               {showAge ? <span className="text-[9px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px]">{formatAge(token.ageMinutes)}</span> : null}
             </div>
@@ -85,7 +101,7 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
           </div>
         ) : null}
 
-        <div className="min-w-0 text-right">
+        <div className="ml-1 min-w-0 text-right">
           <div className="text-[11px] font-bold tracking-tight text-white sm:text-sm md:text-base">{token.babelScore.toFixed(1)}</div>
           <div className={cn("mt-0.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px]", getDirectionStyles(token.direction))}>
             {token.direction === "up" ? <ArrowUp className="h-3 w-3" /> : token.direction === "down" ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
