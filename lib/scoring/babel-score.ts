@@ -70,6 +70,7 @@ export function computeBabelRankings(tokens: BagsTokenRaw[], historic: HistoricM
       tradeCount: safeNumber(token.tradeCount),
       buyerCount: safeNumber(token.buyerCount),
       feeValue: safeNumber(token.feeValue),
+      hasLiveActivity: token.hasLiveActivity ?? false,
     }));
 
   if (sanitizedTokens.length === 0) {
@@ -146,6 +147,7 @@ export function computeBabelRankings(tokens: BagsTokenRaw[], historic: HistoricM
         feeValue: token.feeValue,
         price: token.price,
       },
+      hasLiveActivity: token.hasLiveActivity,
       trend,
       scoreBreakdown: breakdown,
       computedAt: new Date().toISOString(),

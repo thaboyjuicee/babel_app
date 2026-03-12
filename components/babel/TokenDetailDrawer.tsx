@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Copy } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MomentumBadge } from "@/components/babel/MomentumBadge";
 import { ScoreBadge } from "@/components/babel/ScoreBadge";
 import { SparklineChart } from "@/components/babel/SparklineChart";
 import { formatCompactNumber, shortAddress } from "@/lib/utils/format";
+import { cn } from "@/lib/utils/cn";
 import type { RankedToken } from "@/types/babel";
 
 type TokenDetailDrawerProps = {
@@ -25,18 +26,24 @@ const breakdownLabels: Array<{ key: keyof RankedToken["scoreBreakdown"]; label: 
 
 export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDrawerProps) {
   const [copied, setCopied] = useState<"mint" | "creator" | null>(null);
-  const [sparklineWidth, setSparklineWidth] = useState(280);
-  const isCompactChart = sparklineWidth < 280;
 
-  useEffect(() => {
-    const update = () => {
-      const available = Math.max(220, window.innerWidth - 86);
-      setSparklineWidth(Math.min(340, available));
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
+  const hasLiveActivity = token
+    ? token.hasLiveActivity && (
+      token.metrics.volume > 0 ||
+      token.metrics.tradeCount > 0 ||
+      token.metrics.buyerCount > 0 ||
+      token.metrics.feeValue > 0
+    )
+    : false;
+
+  const formatActivityMetric = (value: number) => {
+    return hasLiveActivity ? formatCompactNumber(value) : "N/A";
+  };
+
+  const metricValueClass = hasLiveActivity ? "text-white" : "text-white/30";
+  const metricCardClass = hasLiveActivity
+    ? "border-white/[0.05]"
+    : "border-rose-400/35 bg-rose-400/[0.06]";
 
   async function copyAddress(value: string, target: "mint" | "creator") {
     try {
@@ -93,7 +100,7 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
               </div>
               <p className="mt-3 text-sm text-white/55">{token.whyRanked}</p>
               <div className="mt-4 rounded-lg border border-white/[0.06] bg-[#0F0F16] p-2">
-                <SparklineChart points={token.trend} width={sparklineWidth} height={isCompactChart ? 64 : 80} />
+                <SparklineChart points={token.trend} width={280} height={80} />
               </div>
             </section>
 
@@ -118,12 +125,28 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
             </section>
 
             <section className="rounded-xl border border-white/[0.06] bg-[#12121A] p-4">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-white/35">Activity</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[10px] uppercase tracking-[0.14em] text-white/35">Activity</p>
+                <span className={cn(
+                  "rounded-full px-2 py-1 text-[11px] font-semibold",
+                  hasLiveActivity ? "bg-emerald-400/10 text-emerald-300" : "bg-rose-400/12 text-rose-300",
+                )}>
+                  {hasLiveActivity ? "Live activity" : "No live activity yet"}
+                </span>
+              </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                <div className="rounded-lg border border-white/[0.05] p-2 text-white/70">Vol: <span className="text-white">{formatCompactNumber(token.metrics.volume)}</span></div>
-                <div className="rounded-lg border border-white/[0.05] p-2 text-white/70">Trades: <span className="text-white">{formatCompactNumber(token.metrics.tradeCount)}</span></div>
-                <div className="rounded-lg border border-white/[0.05] p-2 text-white/70">Buyers: <span className="text-white">{formatCompactNumber(token.metrics.buyerCount)}</span></div>
-                <div className="rounded-lg border border-white/[0.05] p-2 text-white/70">Fees: <span className="text-white">{formatCompactNumber(token.metrics.feeValue)}</span></div>
+                <div className={cn("rounded-lg border p-2 text-white/70", metricCardClass)}>
+                  Vol: <span className={metricValueClass}>{formatActivityMetric(token.metrics.volume)}</span>
+                </div>
+                <div className={cn("rounded-lg border p-2 text-white/70", metricCardClass)}>
+                  Trades: <span className={metricValueClass}>{formatActivityMetric(token.metrics.tradeCount)}</span>
+                </div>
+                <div className={cn("rounded-lg border p-2 text-white/70", metricCardClass)}>
+                  Buyers: <span className={metricValueClass}>{formatActivityMetric(token.metrics.buyerCount)}</span>
+                </div>
+                <div className={cn("rounded-lg border p-2 text-white/70", metricCardClass)}>
+                  Fees: <span className={metricValueClass}>{formatActivityMetric(token.metrics.feeValue)}</span>
+                </div>
               </div>
 
               <div className="mt-4 space-y-2 text-xs text-white/55">

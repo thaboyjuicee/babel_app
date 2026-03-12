@@ -11,7 +11,7 @@ type AgeBucketTabsProps = {
 
 export function AgeBucketTabs({ selected, onChange }: AgeBucketTabsProps) {
   return (
-    <div className="no-scrollbar grid w-full grid-cols-2 gap-2 rounded-xl border border-white/[0.05] bg-white/[0.02] p-2 sm:flex sm:flex-wrap sm:justify-center sm:overflow-x-auto">
+    <div className="no-scrollbar flex w-full items-stretch justify-center gap-2 overflow-x-auto rounded-xl border border-white/[0.05] bg-white/[0.02] p-2">
       {AGE_BUCKETS.map((bucket) => {
         const active = selected === bucket.key;
         return (
@@ -19,7 +19,7 @@ export function AgeBucketTabs({ selected, onChange }: AgeBucketTabsProps) {
             key={bucket.key}
             onClick={() => onChange(bucket.key)}
             className={cn(
-              "relative min-h-14 w-full rounded-lg px-2 py-2 text-left transition sm:min-w-[132px] sm:px-3",
+              "relative min-h-14 min-w-[132px] shrink-0 rounded-lg px-2 py-2 text-left transition sm:px-3",
               active ? "text-white" : "text-white/30 hover:text-white/50",
             )}
           >

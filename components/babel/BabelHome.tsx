@@ -63,13 +63,13 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
     <AppShell>
       <HeroSection />
 
-      <section id="tower" className="mx-auto max-w-7xl px-4 pb-6 sm:px-6">
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <section id="tower" className="mx-auto max-w-7xl px-4 pb-6">
+        <div className="mb-4 flex items-center justify-between">
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Momentum Tower</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-white">Momentum Tower</h2>
             <p className="mt-1 text-sm text-white/45">Which new Bags tokens are rising fastest right now?</p>
           </div>
-          <div className="self-start rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/45 sm:self-center">
+          <div className="rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/45">
             Updated {updatedText} UTC
           </div>
         </div>
@@ -95,7 +95,7 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
           </div>
         ) : null}
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="mt-4 grid gap-4">
           <TowerView tokens={current.tokens} selectedId={selectedToken?.id} onSelect={onTokenSelect} />
 
           <div className="space-y-4">

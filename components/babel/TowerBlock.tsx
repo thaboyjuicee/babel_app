@@ -33,7 +33,7 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
   const showSparkline = true;
   const showDelta = true;
 
-  const rankBadgeSize = token.rank === 1 ? "h-7 w-7 sm:h-8 sm:w-8" : token.rank <= 3 ? "h-6 w-6 sm:h-7 sm:w-7" : "h-5 w-5 sm:h-6 sm:w-6";
+  const rankBadgeSize = token.rank === 1 ? "h-7 w-7" : token.rank <= 3 ? "h-6 w-6" : "h-5 w-5";
   const rankBadgeTone = token.rank === 1 ? "bg-gradient-to-br from-cyan-400 to-blue-500 text-white" : "bg-white/[0.05] text-white/70";
 
   const isTop = token.rank <= 3;
@@ -70,7 +70,7 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
         style={{ width: `${width}%`, height, boxShadow: baseGlowStyle }}
         onClick={onClick}
         className={cn(
-          "group relative mx-auto flex w-full min-w-0 origin-center items-center gap-1 rounded-md border px-2 py-1.5 transition sm:px-2 sm:py-1.5",
+          "group relative mx-auto flex w-full min-w-0 origin-center items-center gap-1 rounded-md border px-2 py-1.5 transition",
           token.rank <= 3 ? "bg-[#16161F]" : "bg-[#111119]",
           selected ? "border-cyan-300/70 shadow-[0_0_20px_rgba(56,189,248,0.28)]" : "border-white/[0.06] hover:border-white/[0.16]",
           selected ? "ring-2 ring-cyan-300/55" : null,
@@ -82,27 +82,27 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
           <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent" />
         ) : null}
 
-          <div className={cn("grid min-w-0 shrink-0 place-items-center rounded-md text-[11px] font-semibold sm:text-xs", rankBadgeSize, rankBadgeTone)}>#{token.rank}</div>
+          <div className={cn("grid min-w-0 shrink-0 place-items-center rounded-md text-[11px] font-semibold", rankBadgeSize, rankBadgeTone)}>#{token.rank}</div>
 
           <div className="min-w-0 flex-1 text-left">
-            <div className="truncate text-xs font-semibold tracking-tight text-white/90 sm:text-sm">
+            <div className="truncate text-sm font-semibold tracking-tight text-white/90">
               {token.name}
-              {showSymbol ? <span className="ml-1 text-white/40 sm:text-sm">{token.symbol}</span> : null}
+              {showSymbol ? <span className="ml-1 text-white/40">{token.symbol}</span> : null}
             </div>
             <div className="mt-0.5 flex items-center justify-between gap-2">
               <MomentumBadge label={token.momentumLabel} />
-              {showAge ? <span className="text-[9px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px]">{formatAge(token.ageMinutes)}</span> : null}
+              {showAge ? <span className="text-[10px] uppercase tracking-[0.12em] text-white/35">{formatAge(token.ageMinutes)}</span> : null}
             </div>
           </div>
 
         {showSparkline ? (
-          <div className="hidden sm:block">
+          <div>
             <SparklineChart points={token.trend} width={compact ? 58 : 74} height={compact ? 18 : 22} />
           </div>
         ) : null}
 
         <div className="ml-1 min-w-0 text-right">
-          <div className="text-[11px] font-bold tracking-tight text-white sm:text-sm md:text-base">{token.babelScore.toFixed(1)}</div>
+          <div className="text-sm font-bold tracking-tight text-white">{token.babelScore.toFixed(1)}</div>
           <div className={cn("mt-0.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px]", getDirectionStyles(token.direction))}>
             {token.direction === "up" ? <ArrowUp className="h-3 w-3" /> : token.direction === "down" ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
             {showDelta ? <span>{token.rankDelta > 0 ? `+${token.rankDelta}` : token.rankDelta}</span> : null}

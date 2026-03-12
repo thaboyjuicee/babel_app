@@ -5,7 +5,7 @@ import { fetchSolanaMetadata } from "@/lib/bags/solana-meta";
 
 // How many most-recent tokens (by list position) to enrich with DexScreener.
 // Overridable via BABEL_ENRICH_WINDOW env var.
-const DEFAULT_ENRICH_WINDOW = 500;
+const DEFAULT_ENRICH_WINDOW = 1000;
 
 function getEnrichWindow(): number {
   const v = parseInt(process.env.BABEL_ENRICH_WINDOW ?? "", 10);
@@ -109,6 +109,7 @@ export function normalizeToken(raw: Record<string, unknown>): BagsTokenRaw | nul
       unwrapped?.feesUsd ||
       unwrapped?.revenue,
     ),
+    hasLiveActivity: false,
   };
 }
 
@@ -213,6 +214,7 @@ export class RealBagsProvider implements BagsDataProvider {
           tradeCount: dex.txBuys24h + dex.txSells24h,
           buyerCount: dex.txBuys24h,
           feeValue: dex.volume24h * 0.01,
+          hasLiveActivity: true,
         };
       });
 
@@ -240,6 +242,7 @@ export class RealBagsProvider implements BagsDataProvider {
         name: meta?.name || `Bags ${short}…`,
         symbol: meta?.symbol || short,
         createdAt: new Date(now - (1 - fraction) * HOURS_24).toISOString(),
+        hasLiveActivity: false,
       };
     });
 
