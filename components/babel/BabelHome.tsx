@@ -35,6 +35,11 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
   }, [current.updatedAt]);
 
   const apiError = current.error ?? null;
+  const isStale = useMemo(() => {
+    const parsed = Date.parse(current.updatedAt);
+    if (!Number.isFinite(parsed)) return false;
+    return Date.now() - parsed > 90_000;
+  }, [current.updatedAt]);
 
   const climbers = useMemo(
     () => current.tokens.filter((t) => t.rankDelta > 0).sort((a, b) => b.rankDelta - a.rankDelta).slice(0, 6),
@@ -81,6 +86,12 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
               <code className="rounded bg-white/[0.06] px-1">.env.local</code>, then restart the server.
               Use <code className="rounded bg-white/[0.06] px-1">/api/debug/probe</code> to test your API key.
             </p>
+          </div>
+        ) : null}
+
+        {isStale ? (
+          <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/[0.05] p-4 text-sm text-amber-100/90">
+            <p>Data may be stale. Last refresh was at {updatedText} UTC. Results are best-effort from the latest cached snapshot.</p>
           </div>
         ) : null}
 

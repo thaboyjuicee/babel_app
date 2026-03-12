@@ -143,7 +143,25 @@ async function refreshRankings(force = false): Promise<void> {
     }
 
     const provider = getBagsProvider();
-    const universe = await provider.getTokenUniverse();
+    let universe: BagsTokenRaw[] = [];
+    let refreshError: string | null = null;
+    try {
+      universe = await provider.getTokenUniverse();
+    } catch (error) {
+      if (store.latest.length > 0) {
+        refreshError = error instanceof Error ? error.message : String(error);
+        console.error(
+          `[Babel] Failed to refresh token universe (${provider.source}); reusing ${store.latest.length} cached tokens`,
+          error,
+        );
+        store.lastRefreshError = refreshError;
+        return;
+      }
+      store.lastRefreshError = error instanceof Error ? error.message : String(error);
+      throw error;
+    }
+
+    store.lastRefreshError = null;
     const scoringUniverse = limitUniverse(universe);
 
     const historic = Object.fromEntries(
@@ -187,6 +205,7 @@ export async function getTowerData(bucket: AgeBucket): Promise<TowerResponse> {
     bucket,
     updatedAt: store.updatedAt,
     source: store.source,
+    error: store.lastRefreshError ?? undefined,
     tokens: store.latest.filter((token) => token.bucket === bucket),
   };
 }

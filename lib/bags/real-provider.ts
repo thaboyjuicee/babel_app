@@ -1,6 +1,7 @@
 import type { BagsTokenRaw } from "@/types/babel";
 import type { BagsDataProvider } from "@/lib/bags/types";
 import { dexScreenerEnrich } from "@/lib/bags/dexscreener";
+import { fetchSolanaMetadata } from "@/lib/bags/solana-meta";
 
 // How many most-recent tokens (by list position) to enrich with DexScreener.
 // Overridable via BABEL_ENRICH_WINDOW env var.
@@ -221,11 +222,25 @@ export class RealBagsProvider implements BagsDataProvider {
       .slice(Math.max(0, total - windowSize))
       .filter((t) => !enrichMap.has(t.mint));
 
+    // Fetch on-chain Metaplex name/symbol for the most recent synthetic tokens only
+    // (capped to avoid public RPC rate limits — older tokens stay as shortened mint IDs)
+    const META_CAP = 60;
+    const toNameLookup = recentNonEnriched.slice(-META_CAP).map((t) => t.mint);
+    const metaMap = await fetchSolanaMetadata(toNameLookup);
+    console.log(`[Babel] Solana metadata resolved ${metaMap.size}/${toNameLookup.length} synthetic tokens`);
+
     const now = Date.now();
     const HOURS_24 = 24 * 60 * 60 * 1000;
     const syntheticTokens = recentNonEnriched.map((token, idx, arr): BagsTokenRaw => {
+      const meta = metaMap.get(token.mint);
+      const short = token.mint.slice(0, 6);
       const fraction = idx / Math.max(1, arr.length - 1);
-      return { ...token, createdAt: new Date(now - (1 - fraction) * HOURS_24).toISOString() };
+      return {
+        ...token,
+        name: meta?.name || `Bags ${short}…`,
+        symbol: meta?.symbol || short,
+        createdAt: new Date(now - (1 - fraction) * HOURS_24).toISOString(),
+      };
     });
 
     console.log(
@@ -236,30 +251,38 @@ export class RealBagsProvider implements BagsDataProvider {
 
   async getTokenUniverse(): Promise<BagsTokenRaw[]> {
     const pinnedPath = process.env.BAGS_API_TOKENS_PATH;
-    if (pinnedPath) {
-      const [result, migratedMints] = await Promise.all([
-        this.tryPath(pinnedPath),
-        this.fetchMigratedMints(pinnedPath),
-      ]);
-      if (!result.ok) throw new Error(`Bags API ${pinnedPath} returned ${result.status}`);
-      console.log(`[Babel] Bags API: ${result.tokens.length} total, ${migratedMints.size} migrated`);
-      return this.enrichAndDistribute(result.tokens, migratedMints);
-    }
+    const candidatePaths = [
+      ...(pinnedPath ? [pinnedPath] : []),
+      ...CANDIDATE_PATHS,
+    ];
+    const seen = new Set<string>();
+    const attempts = candidatePaths.filter((path) => {
+      if (seen.has(path)) return false;
+      seen.add(path);
+      return true;
+    });
 
     const errors: string[] = [];
-    for (const path of CANDIDATE_PATHS) {
+    for (const path of attempts) {
       const result = await this.tryPath(path);
-      if (result.ok && result.tokens.length > 0) {
-        const migratedMints = await this.fetchMigratedMints(path);
-        console.log(`[Babel] Bags API: using /${path} (${result.tokens.length} total, ${migratedMints.size} migrated)`);
-        return this.enrichAndDistribute(result.tokens, migratedMints);
+      if (!result.ok) {
+        errors.push(`/${path}: status ${result.status}`);
+        continue;
       }
-      errors.push(`/${path}: ${result.ok ? "empty" : result.status}`);
+      if (result.tokens.length === 0) {
+        errors.push(`/${path}: empty`);
+        continue;
+      }
+
+      const migratedMints = await this.fetchMigratedMints(path);
+      console.log(`[Babel] Bags API: using /${path} (${result.tokens.length} total, ${migratedMints.size} migrated)`);
+      return this.enrichAndDistribute(result.tokens, migratedMints);
     }
 
     throw new Error(
       `Bags API returned no usable data. Tried: ${errors.join(", ")}. ` +
-      `Set BAGS_API_TOKENS_PATH in .env.local to pin the correct endpoint.`,
+      `Set BAGS_API_TOKENS_PATH in .env.local to pin the correct endpoint. ` +
+      `Current base URL: ${this.baseUrl}`,
     );
   }
 
