@@ -21,6 +21,20 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const current = towerByBucket[selectedBucket];
+  const updatedText = useMemo(() => {
+    const date = new Date(current.updatedAt);
+    if (Number.isNaN(date.getTime())) {
+      return "now";
+    }
+
+    return new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+      timeZone: "UTC",
+    }).format(date);
+  }, [current.updatedAt]);
 
   const climbers = useMemo(() => current.tokens.filter((item) => item.rankDelta > 0).sort((a, b) => b.rankDelta - a.rankDelta).slice(0, 6), [current.tokens]);
   const breakout = useMemo(() => current.tokens.filter((item) => item.momentumLabel === "Near Breakout" || item.rank <= 6).slice(0, 6), [current.tokens]);
@@ -42,7 +56,7 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
             <p className="mt-1 text-sm text-white/45">Which new Bags tokens are rising fastest right now?</p>
           </div>
           <div className="rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/45">
-            Updated {new Date(current.updatedAt).toLocaleTimeString()} · {current.source.toUpperCase()} mode
+            Updated {updatedText} · {current.source.toUpperCase()} mode
           </div>
         </div>
 

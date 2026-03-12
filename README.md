@@ -53,7 +53,16 @@ BAGS_API_KEY=
 BAGS_API_BASE_URL=https://public-api-v2.bags.fm/api/v1/
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/babel
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+BABEL_RANKING_RETENTION_HOURS=24
+BABEL_SNAPSHOT_RETENTION_DAYS=7
 ```
+
+Retention controls (optional):
+
+- `BABEL_RANKING_RETENTION_HOURS`: keep ranking snapshots this many hours (default `24`).
+- `BABEL_SNAPSHOT_RETENTION_DAYS`: keep token snapshots this many days (default `7`).
+
+The app prunes rows older than these windows automatically each time ingestion runs (`npm run ingest` or on-demand refresh in production). It also removes orphaned `Token` rows left behind after snapshot/ranking deletions.
 
 ### Mock mode behavior
 

@@ -3,9 +3,14 @@ import { clamp } from "@/lib/utils/format";
 
 type HistoricMap = Record<string, RankedToken[]>;
 
+function safeNumber(value: number | undefined): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  return Math.max(0, value);
+}
+
 function ageInMinutes(createdAt: string): number {
   const created = new Date(createdAt).getTime();
-  if (Number.isNaN(created)) return 0;
+  if (Number.isNaN(created)) return 1440;
   return Math.max(0, (Date.now() - created) / 60_000);
 }
 
@@ -47,13 +52,28 @@ function buildWhyRanked(breakdown: ScoreBreakdown): string {
 }
 
 export function computeBabelRankings(tokens: BagsTokenRaw[], historic: HistoricMap = {}): RankedToken[] {
-  const ages = tokens.map((t) => ageInMinutes(t.createdAt));
-  const maxVolume = Math.max(...tokens.map((t) => t.volume), 1);
-  const maxTrades = Math.max(...tokens.map((t) => t.tradeCount), 1);
-  const maxBuyers = Math.max(...tokens.map((t) => t.buyerCount), 1);
-  const maxFees = Math.max(...tokens.map((t) => t.feeValue), 1);
+  const sanitizedTokens = tokens
+    .filter((token): token is BagsTokenRaw => Boolean(token.mint))
+    .map((token) => ({
+      ...token,
+      price: safeNumber(token.price),
+      volume: safeNumber(token.volume),
+      tradeCount: safeNumber(token.tradeCount),
+      buyerCount: safeNumber(token.buyerCount),
+      feeValue: safeNumber(token.feeValue),
+    }));
 
-  const scored = tokens.map((token, idx): RankedToken => {
+  if (sanitizedTokens.length === 0) {
+    return [];
+  }
+
+  const ages = sanitizedTokens.map((t) => ageInMinutes(t.createdAt));
+  const maxVolume = Math.max(...sanitizedTokens.map((t) => t.volume), 1);
+  const maxTrades = Math.max(...sanitizedTokens.map((t) => t.tradeCount), 1);
+  const maxBuyers = Math.max(...sanitizedTokens.map((t) => t.buyerCount), 1);
+  const maxFees = Math.max(...sanitizedTokens.map((t) => t.feeValue), 1);
+
+  const scored = sanitizedTokens.map((token, idx): RankedToken => {
     const ageMinutes = ages[idx] ?? 0;
     const bucket = pickBucket(ageMinutes);
 
@@ -85,7 +105,7 @@ export function computeBabelRankings(tokens: BagsTokenRaw[], historic: HistoricM
     const trend = Array.from({ length: 16 }, (_, n) => {
       const wave = Math.sin((n + 1) * 0.55 + idx * 0.3) * 0.08;
       const baseline = babelScore / 100;
-      return Number((baseline + wave + n * 0.005).toFixed(3));
+      return Number(clamp(baseline + wave + n * 0.005).toFixed(3));
     });
 
     return {
@@ -124,12 +144,23 @@ export function computeBabelRankings(tokens: BagsTokenRaw[], historic: HistoricM
   const merged: RankedToken[] = [];
 
   (Object.keys(byBucket) as AgeBucket[]).forEach((bucket) => {
+    const previousByMint = new Map(historic[bucket]?.map((item) => [item.mint, item.rank]) ?? []);
+
     const sorted = byBucket[bucket]
-      .sort((a, b) => b.babelScore - a.babelScore)
+      .sort((a, b) => {
+        const scoreDelta = b.babelScore - a.babelScore;
+        if (scoreDelta !== 0) return scoreDelta;
+
+        const ageDelta = a.ageMinutes - b.ageMinutes;
+        if (ageDelta !== 0) return ageDelta;
+
+        return a.mint.localeCompare(b.mint);
+      })
       .map((item, i) => {
         const rank = i + 1;
-        const previousRank = historic[bucket]?.find((h) => h.mint === item.mint)?.rank ?? rank + Math.floor((i % 4) - 1);
-        const delta = previousRank - rank;
+        const hasHistory = previousByMint.has(item.mint);
+        const previousRank = hasHistory ? (previousByMint.get(item.mint) as number | undefined) ?? null : null;
+        const delta = previousRank ? previousRank - rank : 0;
         const direction: RankedToken["direction"] = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
 
         return {

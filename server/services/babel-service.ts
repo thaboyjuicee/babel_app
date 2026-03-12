@@ -5,13 +5,50 @@ import { prisma } from "@/lib/db/prisma";
 import { getMemoryStore } from "@/server/services/memory-store";
 
 const REVALIDATE_MS = 45_000;
+const DEFAULT_RANKING_RETENTION_HOURS = 24;
+const DEFAULT_SNAPSHOT_RETENTION_DAYS = 7;
+
+function parseEnvInteger(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.trunc(parsed);
+}
+
+function getRankingRetentionCutoff(now = new Date()) {
+  const hours = parseEnvInteger(process.env.BABEL_RANKING_RETENTION_HOURS, DEFAULT_RANKING_RETENTION_HOURS);
+  return new Date(now.getTime() - hours * 60 * 60_000);
+}
+
+function getSnapshotRetentionCutoff(now = new Date()) {
+  const days = parseEnvInteger(process.env.BABEL_SNAPSHOT_RETENTION_DAYS, DEFAULT_SNAPSHOT_RETENTION_DAYS);
+  return new Date(now.getTime() - days * 24 * 60 * 60_000);
+}
 
 function shouldRefresh(lastUpdated: string) {
   return Date.now() - new Date(lastUpdated).getTime() > REVALIDATE_MS;
 }
 
+async function cleanupRetentionWindows() {
+  const now = new Date();
+  const rankingCutoff = getRankingRetentionCutoff(now);
+  const snapshotCutoff = getSnapshotRetentionCutoff(now);
+
+  await prisma.$transaction([
+    prisma.tokenSnapshot.deleteMany({ where: { capturedAt: { lt: snapshotCutoff } } }),
+    prisma.tokenRanking.deleteMany({ where: { computedAt: { lt: rankingCutoff } } }),
+    prisma.token.deleteMany({
+      where: {
+        snapshots: { none: {} },
+        rankings: { none: {} },
+      },
+    }),
+  ]);
+}
+
 async function saveToDatabase(rankings: RankedToken[]): Promise<void> {
   if (!process.env.DATABASE_URL) return;
+
+  await cleanupRetentionWindows();
 
   for (const ranked of rankings) {
     const token = await prisma.token.upsert({

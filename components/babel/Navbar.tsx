@@ -4,6 +4,17 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
+  function navigateToSection(sectionId: "tower" | "how-it-works") {
+    if (typeof window === "undefined") return;
+
+    if (window.location.pathname === "/") {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+
+    window.location.href = `/#${sectionId}`;
+  }
+
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.04] bg-[rgba(10,10,15,0.85)] backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -13,12 +24,24 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm md:flex">
-          <a className="text-white/40 transition hover:text-white/70" href="#tower">Tower</a>
-          <a className="text-white/40 transition hover:text-white/70" href="#how-it-works">How it works</a>
+          <button
+            type="button"
+            className="text-white/40 transition hover:text-white/70"
+            onClick={() => navigateToSection("tower")}
+          >
+            Tower
+          </button>
+          <button
+            type="button"
+            className="text-white/40 transition hover:text-white/70"
+            onClick={() => navigateToSection("how-it-works")}
+          >
+            How it works
+          </button>
           <Link className="text-white/40 transition hover:text-white/70" href="/about">About</Link>
         </nav>
 
-        <Button variant="outline" size="sm" onClick={() => document.getElementById("tower")?.scrollIntoView({ behavior: "smooth" })}>
+        <Button variant="outline" size="sm" onClick={() => navigateToSection("tower")}>
           Explore Tower
         </Button>
       </div>
