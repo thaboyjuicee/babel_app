@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MomentumBadge } from "@/components/babel/MomentumBadge";
@@ -26,6 +26,17 @@ const breakdownLabels: Array<{ key: keyof RankedToken["scoreBreakdown"]; label: 
 
 export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDrawerProps) {
   const [copied, setCopied] = useState<"mint" | "creator" | null>(null);
+  const [sparklineWidth, setSparklineWidth] = useState(260);
+
+  useEffect(() => {
+    const update = () => {
+      const available = Math.max(220, window.innerWidth - 48);
+      setSparklineWidth(Math.min(340, available));
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   const hasLiveActivity = token
     ? token.hasLiveActivity && (
@@ -81,8 +92,8 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
         {!token ? null : (
           <div className="h-full overflow-y-auto pr-1">
             <div className="mb-5 border-b border-white/[0.06] pb-4">
-              <SheetTitle className="text-2xl font-bold tracking-tight text-white">{token.name}</SheetTitle>
-              <p className="mt-1 text-sm text-white/45">{token.symbol} · {Math.round(token.ageMinutes)}m old</p>
+              <SheetTitle className="text-xl font-bold tracking-tight text-white sm:text-2xl">{token.name}</SheetTitle>
+              <p className="mt-1 text-xs text-white/45 sm:text-sm">{token.symbol} · {Math.round(token.ageMinutes)}m old</p>
               <div className="mt-2">
                 <MomentumBadge label={token.momentumLabel} />
               </div>
@@ -100,7 +111,7 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
               </div>
               <p className="mt-3 text-sm text-white/55">{token.whyRanked}</p>
               <div className="mt-4 rounded-lg border border-white/[0.06] bg-[#0F0F16] p-2">
-                <SparklineChart points={token.trend} width={280} height={80} />
+                <SparklineChart points={token.trend} width={sparklineWidth} height={80} />
               </div>
             </section>
 
@@ -149,13 +160,13 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2 text-xs text-white/55">
+              <div className="mt-4 space-y-2 text-[11px] text-white/55 sm:text-xs">
                 <button
-                  className="flex w-full items-center justify-between rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono"
+                  className="flex min-w-0 w-full items-center justify-between gap-2 rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono text-[11px] sm:text-xs"
                   onClick={() => copyAddress(token.mint, "mint")}
                   type="button"
                 >
-                  <span>Mint: {shortAddress(token.mint)}</span>
+                  <span className="truncate">Mint: {shortAddress(token.mint)}</span>
                   {copied === "mint" ? (
                     <span className="text-[10px] font-semibold text-emerald-300">Copied</span>
                   ) : (
@@ -163,11 +174,11 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
                   )}
                 </button>
                 <button
-                  className="flex w-full items-center justify-between rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono"
+                  className="flex min-w-0 w-full items-center justify-between gap-2 rounded-lg border border-white/[0.05] px-3 py-2 text-left font-mono text-[11px] sm:text-xs"
                   onClick={() => copyAddress(token.creator, "creator")}
                   type="button"
                 >
-                  <span>Creator: {shortAddress(token.creator)}</span>
+                  <span className="truncate">Creator: {shortAddress(token.creator)}</span>
                   {copied === "creator" ? (
                     <span className="text-[10px] font-semibold text-emerald-300">Copied</span>
                   ) : (

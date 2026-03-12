@@ -7,7 +7,7 @@ const ease = [0.16, 1, 0.3, 1] as const;
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden px-4 pb-14 pt-24 sm:px-6 sm:pt-28">
+    <section className="relative overflow-hidden px-3 pb-12 pt-20 sm:px-6 sm:pb-14 sm:pt-24">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-[10%] top-20 h-60 w-60 rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.06),transparent_60%)] blur-2xl" />
         <div className="absolute right-[15%] top-8 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.04),transparent_60%)] blur-2xl" />
@@ -24,7 +24,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.08, ease }}
-          className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl"
+          className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl"
         >
           Catch the climb
           <span className="block text-white/75">before the crowd.</span>
@@ -43,9 +43,13 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.24, ease }}
-          className="mt-8"
+          className="mt-8 flex justify-center"
         >
-          <Button size="lg" onClick={() => document.getElementById("tower")?.scrollIntoView({ behavior: "smooth" })}>
+          <Button
+            size="lg"
+            className="w-full max-w-[240px] sm:max-w-none sm:w-auto"
+            onClick={() => document.getElementById("tower")?.scrollIntoView({ behavior: "smooth" })}
+          >
             Explore Momentum Tower
           </Button>
         </motion.div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AgeBucket, RankedToken, TowerResponse } from "@/types/babel";
 import { HeroSection } from "@/components/babel/HeroSection";
 import { AgeBucketTabs } from "@/components/babel/AgeBucketTabs";
@@ -19,26 +19,30 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
   const [selectedBucket, setSelectedBucket] = useState<AgeBucket>(initialBucket);
   const [selectedToken, setSelectedToken] = useState<RankedToken | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [updatedText, setUpdatedText] = useState("now");
 
   const current = towerByBucket[selectedBucket];
 
-  const updatedText = useMemo(() => {
-    const date = new Date(current.updatedAt);
-    if (Number.isNaN(date.getTime())) return "now";
-    return new Intl.DateTimeFormat("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hourCycle: "h23",
-      timeZone: "UTC",
-    }).format(date);
-  }, [current.updatedAt]);
-
   const apiError = current.error ?? null;
-  const isStale = useMemo(() => {
+  const [isStale, setIsStale] = useState(false);
+
+  useEffect(() => {
     const parsed = Date.parse(current.updatedAt);
-    if (!Number.isFinite(parsed)) return false;
-    return Date.now() - parsed > 90_000;
+    if (!Number.isFinite(parsed)) {
+      setUpdatedText("now");
+      setIsStale(false);
+      return;
+    }
+
+    setUpdatedText(
+      new Intl.DateTimeFormat(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23",
+      }).format(new Date(parsed)),
+    );
+    setIsStale(Date.now() - parsed > 90_000);
   }, [current.updatedAt]);
 
   const climbers = useMemo(
@@ -63,14 +67,14 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
     <AppShell>
       <HeroSection />
 
-      <section id="tower" className="mx-auto max-w-7xl px-4 pb-6">
-        <div className="mb-4 flex items-center justify-between">
+      <section id="tower" className="mx-auto max-w-7xl px-3 pb-6 sm:px-6">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold tracking-tight text-white">Momentum Tower</h2>
+            <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">Momentum Tower</h2>
             <p className="mt-1 text-sm text-white/45">Which new Bags tokens are rising fastest right now?</p>
           </div>
-          <div className="rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-white/45">
-            Updated {updatedText} UTC
+          <div className="rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-[11px] whitespace-nowrap text-white/45 sm:text-xs">
+            Updated {updatedText}
           </div>
         </div>
 
@@ -91,14 +95,14 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
 
         {isStale ? (
           <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/[0.05] p-4 text-sm text-amber-100/90">
-            <p>Data may be stale. Last refresh was at {updatedText} UTC. Results are best-effort from the latest cached snapshot.</p>
+            <p>Data may be stale. Last refresh was at {updatedText}. Results are best-effort from the latest cached snapshot.</p>
           </div>
         ) : null}
 
-        <div className="mt-4 grid gap-4">
+        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <TowerView tokens={current.tokens} selectedId={selectedToken?.id} onSelect={onTokenSelect} />
 
-          <div className="space-y-4">
+          <div className="space-y-4 lg:pl-0">
             <SectionPanel type="climbers" tokens={climbers} onSelect={onTokenSelect} />
             <SectionPanel type="breakout" tokens={breakout} onSelect={onTokenSelect} />
             <SectionPanel type="losing" tokens={falling} onSelect={onTokenSelect} />

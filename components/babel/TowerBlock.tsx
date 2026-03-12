@@ -24,7 +24,7 @@ function getDirectionStyles(direction: RankedToken["direction"]) {
 
 export function TowerBlock({ token, index, total, selected, onClick }: TowerBlockProps) {
   const width = 100;
-  const height = 52;
+  const height = 46;
   const opacity = 1;
 
   const compact = false;
@@ -70,7 +70,7 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
         style={{ width: `${width}%`, height, boxShadow: baseGlowStyle }}
         onClick={onClick}
         className={cn(
-          "group relative mx-auto flex w-full min-w-0 origin-center items-center gap-1 rounded-md border px-2 py-1.5 transition",
+          "group relative mx-auto flex w-full min-w-0 origin-center items-center gap-1 rounded-md border px-1.5 py-1 transition sm:gap-1.5 sm:px-2 sm:py-1.5",
           token.rank <= 3 ? "bg-[#16161F]" : "bg-[#111119]",
           selected ? "border-cyan-300/70 shadow-[0_0_20px_rgba(56,189,248,0.28)]" : "border-white/[0.06] hover:border-white/[0.16]",
           selected ? "ring-2 ring-cyan-300/55" : null,
@@ -82,28 +82,28 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
           <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent" />
         ) : null}
 
-          <div className={cn("grid min-w-0 shrink-0 place-items-center rounded-md text-[11px] font-semibold", rankBadgeSize, rankBadgeTone)}>#{token.rank}</div>
+          <div className={cn("grid min-w-0 shrink-0 place-items-center rounded-md text-[10px] font-semibold sm:text-[11px]", rankBadgeSize, rankBadgeTone)}>#{token.rank}</div>
 
-          <div className="min-w-0 flex-1 text-left">
-            <div className="truncate text-sm font-semibold tracking-tight text-white/90">
+            <div className="min-w-0 flex-1 text-left">
+            <div className="truncate text-[12px] font-semibold tracking-tight text-white/90 sm:text-sm">
               {token.name}
               {showSymbol ? <span className="ml-1 text-white/40">{token.symbol}</span> : null}
             </div>
             <div className="mt-0.5 flex items-center justify-between gap-2">
               <MomentumBadge label={token.momentumLabel} />
-              {showAge ? <span className="text-[10px] uppercase tracking-[0.12em] text-white/35">{formatAge(token.ageMinutes)}</span> : null}
+              {showAge ? <span className="text-[9px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px]">{formatAge(token.ageMinutes)}</span> : null}
             </div>
           </div>
 
         {showSparkline ? (
-          <div>
+          <div className="hidden sm:block">
             <SparklineChart points={token.trend} width={compact ? 58 : 74} height={compact ? 18 : 22} />
           </div>
         ) : null}
 
         <div className="ml-1 min-w-0 text-right">
-          <div className="text-sm font-bold tracking-tight text-white">{token.babelScore.toFixed(1)}</div>
-          <div className={cn("mt-0.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px]", getDirectionStyles(token.direction))}>
+          <div className="text-[13px] font-bold tracking-tight text-white sm:text-sm">{token.babelScore.toFixed(1)}</div>
+          <div className={cn("mt-0.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] sm:text-[10px]", getDirectionStyles(token.direction))}>
             {token.direction === "up" ? <ArrowUp className="h-3 w-3" /> : token.direction === "down" ? <ArrowDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
             {showDelta ? <span>{token.rankDelta > 0 ? `+${token.rankDelta}` : token.rankDelta}</span> : null}
           </div>

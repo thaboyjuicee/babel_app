@@ -12,9 +12,9 @@ const STEPS = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="mx-auto mt-16 max-w-7xl px-4 pb-16 sm:px-6">
+    <section id="how-it-works" className="mx-auto mt-16 max-w-7xl px-3 pb-16 sm:px-6">
       <h2 className="mb-6 text-2xl font-bold tracking-tight text-white sm:text-3xl">How Babel works</h2>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((step, index) => {
           const Icon = step.icon;
           return (
