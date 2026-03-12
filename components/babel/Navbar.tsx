@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
@@ -19,7 +20,7 @@ export function Navbar() {
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.04] bg-[rgba(10,10,15,0.85)] backdrop-blur-xl">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="h-5 w-5 rounded-md bg-gradient-to-br from-cyan-400 to-blue-500" />
+          <Image src="/babel.svg" alt="Babel logo" width={100} height={100} className="h-8 w-8 rounded-md sm:h-10 sm:w-10" />
           <span className="text-xs font-semibold tracking-tight text-white/80 sm:text-sm">Babel</span>
         </Link>
 

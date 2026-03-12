@@ -11,6 +11,13 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Babel | Catch the climb before the crowd",
   description: "A visual momentum tracker for Bags that helps discover fast-rising new tokens before they become obvious.",
+  icons: {
+    icon: [
+      { url: "/babel.svg" },
+      { url: "/babel.svg", sizes: "any" },
+    ],
+    shortcut: "/babel.svg",
+  },
 };
 
 export default function RootLayout({
