@@ -82,7 +82,7 @@ export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
 
         {apiError ? (
           <div className="mt-4 rounded-xl border border-rose-500/20 bg-rose-500/[0.06] p-5">
-            <p className="text-sm font-semibold text-rose-400">Bags API unavailable</p>
+            <p className="text-sm font-semibold text-rose-400">Service warning</p>
             <p className="mt-1 text-xs text-white/50">{apiError}</p>
             <p className="mt-2 text-xs text-white/35">
               Check your <code className="rounded bg-white/[0.06] px-1">BAGS_API_KEY</code> and{" "}

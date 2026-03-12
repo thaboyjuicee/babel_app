@@ -187,7 +187,13 @@ async function refreshRankings(force = false): Promise<void> {
     store.source = provider.source;
 
     if (process.env.DATABASE_URL) {
-      await saveToDatabase(compactLatest);
+      try {
+        await saveToDatabase(compactLatest);
+      } catch (error) {
+        const dbError = error instanceof Error ? error.message : String(error);
+        store.lastRefreshError = `Database persistence unavailable: ${dbError}`;
+        console.error("[Babel] Database persistence failed:", error);
+      }
     }
   })();
 
