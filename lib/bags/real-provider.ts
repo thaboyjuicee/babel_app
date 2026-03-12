@@ -2,7 +2,16 @@ import type { BagsTokenRaw } from "@/types/babel";
 import type { BagsDataProvider } from "@/lib/bags/types";
 
 // Ordered list of paths to try until one succeeds.
-const CANDIDATE_PATHS = ["pools", "tokens", "coins", "markets", "token/list"];
+// Keep legacy guesses at the end for backward compatibility.
+const CANDIDATE_PATHS = [
+  "solana/bags/pools",
+  "token-launch/creators",
+  "pools",
+  "tokens",
+  "coins",
+  "markets",
+  "token/list",
+];
 
 function toNumber(value: unknown, fallback = 0): number {
   if (typeof value === "number") return Number.isFinite(value) ? value : fallback;
@@ -120,7 +129,7 @@ export class RealBagsProvider implements BagsDataProvider {
       const candidate: unknown =
         Array.isArray(payload)
           ? payload
-          : payload?.data ?? payload?.tokens ?? payload?.pools ?? payload?.results ?? payload?.items ?? [];
+          : payload?.response ?? payload?.data ?? payload?.tokens ?? payload?.pools ?? payload?.results ?? payload?.items ?? [];
 
       if (!Array.isArray(candidate)) return { ok: true, status: res.status, tokens: [] };
 

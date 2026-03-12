@@ -1,4 +1,4 @@
-import { AGE_BUCKETS, type AgeBucket, type RankedToken, type TowerResponse } from "@/types/babel";
+import { AGE_BUCKETS, type AgeBucket, type BagsTokenRaw, type RankedToken, type TowerResponse } from "@/types/babel";
 import { getBagsProvider } from "@/lib/bags/provider";
 import { computeBabelRankings } from "@/lib/scoring/babel-score";
 import { prisma } from "@/lib/db/prisma";
@@ -7,6 +7,11 @@ import { getMemoryStore } from "@/server/services/memory-store";
 const REVALIDATE_MS = 45_000;
 const DEFAULT_RANKING_RETENTION_HOURS = 24;
 const DEFAULT_SNAPSHOT_RETENTION_DAYS = 7;
+const DEFAULT_MAX_UNIVERSE_SIZE = 12_000;
+const DEFAULT_BUCKET_LIMIT = 120;
+const DEFAULT_DB_SAVE_LIMIT = 1_000;
+
+let refreshInFlight: Promise<void> | null = null;
 
 function parseEnvInteger(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
@@ -26,6 +31,33 @@ function getSnapshotRetentionCutoff(now = new Date()) {
 
 function shouldRefresh(lastUpdated: string) {
   return Date.now() - new Date(lastUpdated).getTime() > REVALIDATE_MS;
+}
+
+function getMaxUniverseSize(): number {
+  return parseEnvInteger(process.env.BABEL_MAX_UNIVERSE_SIZE, DEFAULT_MAX_UNIVERSE_SIZE);
+}
+
+function getBucketLimit(): number {
+  return parseEnvInteger(process.env.BABEL_BUCKET_LIMIT, DEFAULT_BUCKET_LIMIT);
+}
+
+function getDbSaveLimit(): number {
+  return parseEnvInteger(process.env.BABEL_DB_SAVE_LIMIT, DEFAULT_DB_SAVE_LIMIT);
+}
+
+function scoreUniversePriority(token: BagsTokenRaw): number {
+  const ageMinutes = Math.max(0, (Date.now() - new Date(token.createdAt).getTime()) / 60_000);
+  const recencyBoost = Number.isFinite(ageMinutes) ? Math.max(0, 1_440 - ageMinutes) : 0;
+  return token.volume * 0.55 + token.tradeCount * 0.25 + token.buyerCount * 0.15 + token.feeValue * 0.05 + recencyBoost;
+}
+
+function limitUniverse(universe: BagsTokenRaw[]): BagsTokenRaw[] {
+  const maxUniverse = getMaxUniverseSize();
+  if (universe.length <= maxUniverse) return universe;
+
+  return [...universe]
+    .sort((a, b) => scoreUniversePriority(b) - scoreUniversePriority(a))
+    .slice(0, maxUniverse);
 }
 
 async function cleanupRetentionWindows() {
@@ -48,9 +80,12 @@ async function cleanupRetentionWindows() {
 async function saveToDatabase(rankings: RankedToken[]): Promise<void> {
   if (!process.env.DATABASE_URL) return;
 
+  const writeLimit = getDbSaveLimit();
+  const rankingsToPersist = rankings.slice(0, writeLimit);
+
   await cleanupRetentionWindows();
 
-  for (const ranked of rankings) {
+  for (const ranked of rankingsToPersist) {
     const token = await prisma.token.upsert({
       where: { mint: ranked.mint },
       update: {
@@ -96,30 +131,52 @@ async function saveToDatabase(rankings: RankedToken[]): Promise<void> {
 }
 
 async function refreshRankings(force = false): Promise<void> {
-  const store = getMemoryStore();
-  if (!force && !shouldRefresh(store.updatedAt) && store.latest.length > 0) {
+  if (refreshInFlight) {
+    await refreshInFlight;
     return;
   }
 
-  const provider = getBagsProvider();
-  const universe = await provider.getTokenUniverse();
+  refreshInFlight = (async () => {
+    const store = getMemoryStore();
+    if (!force && !shouldRefresh(store.updatedAt) && store.latest.length > 0) {
+      return;
+    }
 
-  const historic = Object.fromEntries(
-    AGE_BUCKETS.map((bucket) => [bucket.key, store.latest.filter((token) => token.bucket === bucket.key)]),
-  ) as Record<AgeBucket, RankedToken[]>;
+    const provider = getBagsProvider();
+    const universe = await provider.getTokenUniverse();
+    const scoringUniverse = limitUniverse(universe);
 
-  const rankings = computeBabelRankings(universe, historic);
+    const historic = Object.fromEntries(
+      AGE_BUCKETS.map((bucket) => [bucket.key, store.latest.filter((token) => token.bucket === bucket.key)]),
+    ) as Record<AgeBucket, RankedToken[]>;
 
-  store.latest = rankings;
-  store.updatedAt = new Date().toISOString();
-  store.source = provider.source;
+    const rankings = computeBabelRankings(scoringUniverse, historic);
+    const bucketLimit = getBucketLimit();
+    const compactLatest: RankedToken[] = [];
 
-  for (const bucket of AGE_BUCKETS) {
-    store.historyByBucket[bucket.key] = rankings.filter((token) => token.bucket === bucket.key);
-  }
+    for (const bucket of AGE_BUCKETS) {
+      const bucketTokens = rankings
+        .filter((token) => token.bucket === bucket.key)
+        .slice(0, bucketLimit);
+      store.historyByBucket[bucket.key] = bucketTokens;
+      for (const token of bucketTokens) {
+        compactLatest.push(token);
+      }
+    }
 
-  if (process.env.DATABASE_URL) {
-    await saveToDatabase(rankings);
+    store.latest = compactLatest;
+    store.updatedAt = new Date().toISOString();
+    store.source = provider.source;
+
+    if (process.env.DATABASE_URL) {
+      await saveToDatabase(compactLatest);
+    }
+  })();
+
+  try {
+    await refreshInFlight;
+  } finally {
+    refreshInFlight = null;
   }
 }
 
