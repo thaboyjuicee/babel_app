@@ -33,6 +33,17 @@ function toNumber(value: unknown, fallback = 0): number {
   return fallback;
 }
 
+/** Pick up to `n` items evenly distributed across `arr` by index. */
+function sampleEvenly<T>(arr: T[], n: number): T[] {
+  if (arr.length <= n) return arr;
+  const step = arr.length / n;
+  const out: T[] = [];
+  for (let i = 0; i < n; i++) {
+    out.push(arr[Math.min(arr.length - 1, Math.floor(i * step + step / 2))]);
+  }
+  return out;
+}
+
 function toStringValue(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;
 }
@@ -134,7 +145,7 @@ export class RealBagsProvider implements BagsDataProvider {
     try {
       const res = await fetch(url, {
         headers: this.headers,
-        next: { revalidate: 60 },
+        cache: "no-store",
       });
       if (!res.ok) return { ok: false, status: res.status, tokens: [] };
 
@@ -163,7 +174,7 @@ export class RealBagsProvider implements BagsDataProvider {
   private async fetchMigratedMints(basePath: string): Promise<Set<string>> {
     try {
       const url = `${this.baseUrl.replace(/\/+$/, "")}/${basePath}?onlyMigrated=true`;
-      const res = await fetch(url, { headers: this.headers, next: { revalidate: 300 } });
+      const res = await fetch(url, { headers: this.headers, cache: "no-store" });
       if (!res.ok) return new Set();
       const payload = await res.json();
       const candidate = Array.isArray(payload)
@@ -226,10 +237,11 @@ export class RealBagsProvider implements BagsDataProvider {
       .slice(Math.max(0, total - windowSize))
       .filter((t) => !enrichMap.has(t.mint));
 
-    // Fetch on-chain Metaplex name/symbol for the most recent synthetic tokens only
-    // (capped to avoid public RPC rate limits — older tokens stay as shortened mint IDs)
-    const META_CAP = 60;
-    const toNameLookup = recentNonEnriched.slice(-META_CAP).map((t) => t.mint);
+    // Fetch on-chain Metaplex name/symbol/logo for a sample of synthetic tokens.
+    // Tokens are evenly sampled across the full index range so that all four age
+    // buckets (15m → 24h) get coverage — not just the most-recent slice.
+    const META_CAP = 120;
+    const toNameLookup = sampleEvenly(recentNonEnriched, META_CAP).map((t) => t.mint);
     const metaMap = await fetchSolanaMetadata(toNameLookup);
     console.log(`[Babel] Solana metadata resolved ${metaMap.size}/${toNameLookup.length} synthetic tokens`);
 
@@ -245,6 +257,7 @@ export class RealBagsProvider implements BagsDataProvider {
         symbol: meta?.symbol || short,
         createdAt: new Date(now - (1 - fraction) * HOURS_24).toISOString(),
         hasLiveActivity: false,
+        logoUri: meta?.logoUri || token.logoUri,
       };
     });
 

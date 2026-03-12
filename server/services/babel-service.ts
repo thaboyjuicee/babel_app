@@ -1,6 +1,7 @@
 import { AGE_BUCKETS, type AgeBucket, type BagsTokenRaw, type RankedToken, type TowerResponse } from "@/types/babel";
 import { getBagsProvider } from "@/lib/bags/provider";
 import { computeBabelRankings } from "@/lib/scoring/babel-score";
+import { dexScreenerEnrich } from "@/lib/bags/dexscreener";
 import { prisma } from "@/lib/db/prisma";
 import { getMemoryStore } from "@/server/services/memory-store";
 
@@ -179,6 +180,34 @@ async function refreshRankings(force = false): Promise<void> {
       store.historyByBucket[bucket.key] = bucketTokens;
       for (const token of bucketTokens) {
         compactLatest.push(token);
+      }
+    }
+
+    // Post-ranking logo patch: fetch logos from DexScreener for any ranked token
+    // that didn't get one during the pre-scoring enrichment pass.
+    // This guarantees every displayed token has had a logo lookup, regardless of
+    // which bucket it landed in.
+    if (provider.source === "real") {
+      try {
+        const missingLogoMints = compactLatest
+          .filter((t) => !t.logoUri)
+          .map((t) => t.mint);
+
+        if (missingLogoMints.length > 0) {
+          console.log(`[Babel] Post-rank logo patch: fetching logos for ${missingLogoMints.length} ranked tokens`);
+          const logoMap = await dexScreenerEnrich(missingLogoMints);
+          let patched = 0;
+          for (const token of compactLatest) {
+            const enrichment = logoMap.get(token.mint);
+            if (enrichment?.logoUri) {
+              token.logoUri = enrichment.logoUri;
+              patched++;
+            }
+          }
+          console.log(`[Babel] Post-rank logo patch: resolved ${patched}/${missingLogoMints.length} logos`);
+        }
+      } catch (err) {
+        console.warn("[Babel] Post-rank logo patch failed:", err instanceof Error ? err.message : String(err));
       }
     }
 

@@ -12,7 +12,7 @@ const SOLANA_RPC = process.env.SOLANA_RPC_URL ?? DEFAULT_SOLANA_RPC;
 
 async function fetchAssetMeta(
   mint: string,
-): Promise<{ name: string; symbol: string } | null> {
+): Promise<{ name: string; symbol: string; logoUri: string } | null> {
   try {
     const res = await fetch(SOLANA_RPC, {
       method: "POST",
@@ -29,33 +29,39 @@ async function fetchAssetMeta(
     const json = (await res.json()) as {
       result?: {
         content?: {
-          metadata?: {
-            name?: string;
-            symbol?: string;
-          };
+          metadata?: { name?: string; symbol?: string };
+          links?: { image?: string };
+          files?: Array<{ uri?: string; mime?: string }>;
         };
       };
       error?: unknown;
     };
 
-    const name = json?.result?.content?.metadata?.name?.trim() ?? "";
-    const symbol = json?.result?.content?.metadata?.symbol?.trim() ?? "";
+    const content = json?.result?.content;
+    const name = content?.metadata?.name?.trim() ?? "";
+    const symbol = content?.metadata?.symbol?.trim() ?? "";
     if (!name) return null;
 
-    return { name, symbol };
+    // Prefer links.image; fall back to first file entry
+    const logoUri =
+      content?.links?.image?.trim() ||
+      content?.files?.find((f) => f.uri)?.uri?.trim() ||
+      "";
+
+    return { name, symbol, logoUri };
   } catch {
     return null;
   }
 }
 
 /**
- * Fetch name/symbol for a batch of mint addresses.
+ * Fetch name/symbol/logoUri for a batch of mint addresses.
  * Uses low concurrency so the endpoint remains stable during SSR/build.
  */
 export async function fetchSolanaMetadata(
   mints: string[],
-): Promise<Map<string, { name: string; symbol: string }>> {
-  const out = new Map<string, { name: string; symbol: string }>();
+): Promise<Map<string, { name: string; symbol: string; logoUri: string }>> {
+  const out = new Map<string, { name: string; symbol: string; logoUri: string }>();
   if (mints.length === 0) return out;
 
   const CONCURRENCY = 6;
