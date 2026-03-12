@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { AgeBucket, RankedToken, TowerResponse } from "@/types/babel";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { AGE_BUCKETS, type AgeBucket, type RankedToken, type TowerResponse } from "@/types/babel";
 import { HeroSection } from "@/components/babel/HeroSection";
 import { AgeBucketTabs } from "@/components/babel/AgeBucketTabs";
 import { TowerView } from "@/components/babel/TowerView";
@@ -10,23 +11,74 @@ import { TokenDetailDrawer } from "@/components/babel/TokenDetailDrawer";
 import { HowItWorksSection } from "@/components/babel/HowItWorksSection";
 import { AppShell } from "@/components/babel/AppShell";
 
+const AUTO_REFRESH_MS = 45_000;
+
 type BabelHomeProps = {
   initialBucket: AgeBucket;
   towerByBucket: Record<AgeBucket, TowerResponse>;
 };
 
 export function BabelHome({ initialBucket, towerByBucket }: BabelHomeProps) {
+  const router = useRouter();
+  const refreshInFlightRef = useRef(false);
   const [selectedBucket, setSelectedBucket] = useState<AgeBucket>(initialBucket);
   const [selectedToken, setSelectedToken] = useState<RankedToken | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [updatedText, setUpdatedText] = useState("now");
 
   const current = towerByBucket[selectedBucket];
+  const allTokens = useMemo(
+    () => AGE_BUCKETS.flatMap((bucket) => towerByBucket[bucket.key].tokens),
+    [towerByBucket],
+  );
 
   const apiError = current.error ?? null;
   const [isStale, setIsStale] = useState(false);
   const isDatabaseWarning = typeof apiError === "string" && apiError.includes("Database persistence unavailable");
   const isBagsWarning = typeof apiError === "string" && !isDatabaseWarning;
+
+  useEffect(() => {
+    refreshInFlightRef.current = false;
+  }, [towerByBucket]);
+
+  useEffect(() => {
+    if (!selectedToken) return;
+
+    const nextToken = allTokens.find((token) => token.id === selectedToken.id);
+    if (nextToken) {
+      setSelectedToken(nextToken);
+      return;
+    }
+
+    setSelectedToken(null);
+    setDrawerOpen(false);
+  }, [allTokens, selectedToken]);
+
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "hidden" || refreshInFlightRef.current) {
+        return;
+      }
+
+      refreshInFlightRef.current = true;
+      startTransition(() => {
+        router.refresh();
+      });
+    };
+
+    const intervalId = window.setInterval(refresh, AUTO_REFRESH_MS);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshInFlightRef.current = false;
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [router]);
 
   useEffect(() => {
     const parsed = Date.parse(current.updatedAt);
