@@ -1,5 +1,15 @@
 import type { BagsTokenRaw } from "@/types/babel";
 import type { BagsDataProvider } from "@/lib/bags/types";
+import { dexScreenerEnrich } from "@/lib/bags/dexscreener";
+
+// How many most-recent tokens (by list position) to enrich with DexScreener.
+// Overridable via BABEL_ENRICH_WINDOW env var.
+const DEFAULT_ENRICH_WINDOW = 500;
+
+function getEnrichWindow(): number {
+  const v = parseInt(process.env.BABEL_ENRICH_WINDOW ?? "", 10);
+  return Number.isFinite(v) && v > 0 ? v : DEFAULT_ENRICH_WINDOW;
+}
 
 // Ordered list of paths to try until one succeeds.
 // Keep legacy guesses at the end for backward compatibility.
@@ -143,22 +153,106 @@ export class RealBagsProvider implements BagsDataProvider {
     }
   }
 
+  /**
+   * Fetch the set of token mints that have migrated to Meteora DAMM v2.
+   * These are indexed by DexScreener and have real trading data available.
+   */
+  private async fetchMigratedMints(basePath: string): Promise<Set<string>> {
+    try {
+      const url = `${this.baseUrl.replace(/\/+$/, "")}/${basePath}?onlyMigrated=true`;
+      const res = await fetch(url, { headers: this.headers, next: { revalidate: 300 } });
+      if (!res.ok) return new Set();
+      const payload = await res.json();
+      const candidate = Array.isArray(payload)
+        ? payload
+        : (payload?.response ?? payload?.data ?? []);
+      if (!Array.isArray(candidate)) return new Set();
+      return new Set(
+        (candidate as Record<string, unknown>[])
+          .map((r) => String(r.tokenMint ?? r.mint ?? ""))
+          .filter(Boolean),
+      );
+    } catch {
+      return new Set();
+    }
+  }
+
+  /**
+   * Enrich migrated tokens with DexScreener (real timestamps + trading metrics),
+   * and fill the rest with the most recent non-migrated tokens using index-based
+   * synthetic ages to populate all four age buckets.
+   */
+  private async enrichAndDistribute(
+    basicTokens: BagsTokenRaw[],
+    migratedMints: Set<string>,
+  ): Promise<BagsTokenRaw[]> {
+    const total = basicTokens.length;
+    if (total === 0) return [];
+
+    // Enrich migrated tokens (on Meteora DAMM v2 = DexScreener indexed)
+    const mintsToEnrich =
+      migratedMints.size > 0
+        ? basicTokens.filter((t) => migratedMints.has(t.mint)).map((t) => t.mint)
+        : basicTokens.slice(Math.max(0, total - getEnrichWindow())).map((t) => t.mint);
+
+    const enrichMap = await dexScreenerEnrich(mintsToEnrich);
+
+    // Apply DexScreener data to migrated tokens
+    const enrichedTokens = basicTokens
+      .filter((t) => enrichMap.has(t.mint))
+      .map((t): BagsTokenRaw => {
+        const dex = enrichMap.get(t.mint)!;
+        return {
+          ...t,
+          name: dex.name || t.name,
+          symbol: dex.symbol || t.symbol,
+          createdAt: dex.pairCreatedAt > 0 ? new Date(dex.pairCreatedAt).toISOString() : t.createdAt,
+          price: dex.priceUsd,
+          volume: dex.volume24h,
+          tradeCount: dex.txBuys24h + dex.txSells24h,
+          buyerCount: dex.txBuys24h,
+          feeValue: dex.volume24h * 0.01,
+        };
+      });
+
+    // Recent non-migrated tokens with index-based synthetic age (newest = now, oldest = 24h ago)
+    const windowSize = Math.min(total, getEnrichWindow());
+    const recentNonEnriched = basicTokens
+      .slice(Math.max(0, total - windowSize))
+      .filter((t) => !enrichMap.has(t.mint));
+
+    const now = Date.now();
+    const HOURS_24 = 24 * 60 * 60 * 1000;
+    const syntheticTokens = recentNonEnriched.map((token, idx, arr): BagsTokenRaw => {
+      const fraction = idx / Math.max(1, arr.length - 1);
+      return { ...token, createdAt: new Date(now - (1 - fraction) * HOURS_24).toISOString() };
+    });
+
+    console.log(
+      `[Babel] Universe: ${enrichedTokens.length} real (DexScreener) + ${syntheticTokens.length} synthetic`,
+    );
+    return [...enrichedTokens, ...syntheticTokens];
+  }
+
   async getTokenUniverse(): Promise<BagsTokenRaw[]> {
-    // If the user has pinned a specific path, use it directly.
     const pinnedPath = process.env.BAGS_API_TOKENS_PATH;
     if (pinnedPath) {
-      const result = await this.tryPath(pinnedPath);
+      const [result, migratedMints] = await Promise.all([
+        this.tryPath(pinnedPath),
+        this.fetchMigratedMints(pinnedPath),
+      ]);
       if (!result.ok) throw new Error(`Bags API ${pinnedPath} returned ${result.status}`);
-      return result.tokens;
+      console.log(`[Babel] Bags API: ${result.tokens.length} total, ${migratedMints.size} migrated`);
+      return this.enrichAndDistribute(result.tokens, migratedMints);
     }
 
-    // Auto-discover: walk candidate paths and use first that responds with data.
     const errors: string[] = [];
     for (const path of CANDIDATE_PATHS) {
       const result = await this.tryPath(path);
       if (result.ok && result.tokens.length > 0) {
-        console.log(`[Babel] Bags API: using /${path} (${result.tokens.length} tokens)`);
-        return result.tokens;
+        const migratedMints = await this.fetchMigratedMints(path);
+        console.log(`[Babel] Bags API: using /${path} (${result.tokens.length} total, ${migratedMints.size} migrated)`);
+        return this.enrichAndDistribute(result.tokens, migratedMints);
       }
       errors.push(`/${path}: ${result.ok ? "empty" : result.status}`);
     }
