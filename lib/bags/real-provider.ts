@@ -122,6 +122,7 @@ export function normalizeToken(raw: Record<string, unknown>): BagsTokenRaw | nul
     ),
     hasLiveActivity: false,
     logoUri: toStringValue(unwrapped?.logoUri || unwrapped?.image || unwrapped?.imageUrl || unwrapped?.logo),
+    dataSource: "bags" as const,
   };
 }
 
@@ -228,6 +229,7 @@ export class RealBagsProvider implements BagsDataProvider {
           feeValue: dex.volume24h * 0.01,
           hasLiveActivity: true,
           logoUri: dex.logoUri || t.logoUri,
+          dataSource: "dexscreener",
         };
       });
 
@@ -253,11 +255,12 @@ export class RealBagsProvider implements BagsDataProvider {
       const fraction = idx / Math.max(1, arr.length - 1);
       return {
         ...token,
-        name: meta?.name || `Bags ${short}…`,
-        symbol: meta?.symbol || short,
+        name: meta?.name || token.name || `Bags ${short}…`,
+        symbol: meta?.symbol || token.symbol || short,
         createdAt: new Date(now - (1 - fraction) * HOURS_24).toISOString(),
         hasLiveActivity: false,
         logoUri: meta?.logoUri || token.logoUri,
+        dataSource: meta ? "on-chain" : "bags",
       };
     });
 

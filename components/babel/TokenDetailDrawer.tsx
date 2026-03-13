@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Copy } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { MomentumBadge } from "@/components/babel/MomentumBadge";
+import { DataSourceBadge } from "@/components/babel/DataSourceBadge";
 import { ScoreBadge } from "@/components/babel/ScoreBadge";
 import { SparklineChart } from "@/components/babel/SparklineChart";
 import { formatCompactNumber, shortAddress } from "@/lib/utils/format";
@@ -114,8 +115,9 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
                   <p className="mt-0.5 text-xs text-white/45 sm:mt-1 sm:text-sm">{token.symbol} · {Math.round(token.ageMinutes)}m old</p>
                 </div>
               </div>
-              <div className="mt-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <MomentumBadge label={token.momentumLabel} />
+                <DataSourceBadge dataSource={token.dataSource} showDescription />
               </div>
             </div>
 

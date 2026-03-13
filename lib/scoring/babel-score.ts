@@ -1,4 +1,4 @@
-import { AGE_BUCKETS, type AgeBucket, type BagsTokenRaw, type MomentumLabel, type RankedToken, type ScoreBreakdown } from "@/types/babel";
+import { AGE_BUCKETS, type AgeBucket, type BagsTokenRaw, type MomentumLabel, type RankedToken, type ScoreBreakdown, type TokenDataSource } from "@/types/babel";
 import { clamp } from "@/lib/utils/format";
 
 type HistoricMap = Record<string, RankedToken[]>;
@@ -71,6 +71,7 @@ export function computeBabelRankings(tokens: BagsTokenRaw[], historic: HistoricM
       buyerCount: safeNumber(token.buyerCount),
       feeValue: safeNumber(token.feeValue),
       hasLiveActivity: token.hasLiveActivity ?? false,
+      dataSource: (token.dataSource ?? "bags") as TokenDataSource,
     }));
 
   if (sanitizedTokens.length === 0) {
@@ -152,6 +153,7 @@ export function computeBabelRankings(tokens: BagsTokenRaw[], historic: HistoricM
       trend,
       scoreBreakdown: breakdown,
       computedAt: new Date().toISOString(),
+      dataSource: token.dataSource,
     };
   });
 
