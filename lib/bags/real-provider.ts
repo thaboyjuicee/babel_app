@@ -255,8 +255,8 @@ export class RealBagsProvider implements BagsDataProvider {
       const fraction = idx / Math.max(1, arr.length - 1);
       return {
         ...token,
-        name: meta?.name || `Bags ${short}…`,
-        symbol: meta?.symbol || short,
+        name: meta?.name || token.name || `Bags ${short}…`,
+        symbol: meta?.symbol || token.symbol || short,
         createdAt: new Date(now - (1 - fraction) * HOURS_24).toISOString(),
         hasLiveActivity: false,
         logoUri: meta?.logoUri || token.logoUri,
