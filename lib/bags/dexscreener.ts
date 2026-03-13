@@ -55,6 +55,10 @@ export async function dexScreenerEnrich(
           const pairs = (json?.pairs ?? []) as Record<string, unknown>[];
 
           for (const pair of pairs) {
+            // Only process Solana pairs — the endpoint is cross-chain and could
+            // return matching addresses from other networks.
+            if ((pair?.chainId as string | undefined) !== "solana") continue;
+
             const baseToken = pair?.baseToken as Record<string, string> | undefined;
             const mint = baseToken?.address;
             if (!mint) continue;
