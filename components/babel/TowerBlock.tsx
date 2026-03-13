@@ -109,7 +109,9 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
               {showSymbol ? <span className="ml-1 text-white/40">{token.symbol}</span> : null}
             </div>
             <div className="mt-0.5 flex items-center justify-between gap-2">
-              <MomentumBadge label={token.momentumLabel} />
+              <span className="whitespace-nowrap flex-shrink-0">
+                <MomentumBadge label={token.momentumLabel} />
+              </span>
               <div className="flex items-center gap-1.5">
                 <DataSourceBadge dataSource={token.dataSource} />
                 {showAge ? <span className="text-[9px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px]">{formatAge(token.ageMinutes)}</span> : null}
