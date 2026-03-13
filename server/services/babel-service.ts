@@ -1,7 +1,7 @@
 import { AGE_BUCKETS, type AgeBucket, type BagsTokenRaw, type RankedToken, type TowerResponse } from "@/types/babel";
 import { getBagsProvider } from "@/lib/bags/provider";
 import { computeBabelRankings } from "@/lib/scoring/babel-score";
-import { dexScreenerEnrich } from "@/lib/bags/dexscreener";
+import { fetchSolanaMetadata } from "@/lib/bags/solana-meta";
 import { prisma } from "@/lib/db/prisma";
 import { getMemoryStore } from "@/server/services/memory-store";
 
@@ -183,10 +183,9 @@ async function refreshRankings(force = false): Promise<void> {
       }
     }
 
-    // Post-ranking logo patch: fetch logos from DexScreener for any ranked token
-    // that didn't get one during the pre-scoring enrichment pass.
-    // This guarantees every displayed token has had a logo lookup, regardless of
-    // which bucket it landed in.
+    // Post-ranking logo patch: fetch logos from Helius (Solana on-chain metadata)
+    // for any ranked token that didn't get one during the pre-scoring enrichment pass.
+    // DexScreener already provides logos for migrated tokens; this covers the rest.
     if (provider.source === "real") {
       try {
         const missingLogoMints = compactLatest
@@ -195,12 +194,12 @@ async function refreshRankings(force = false): Promise<void> {
 
         if (missingLogoMints.length > 0) {
           console.log(`[Babel] Post-rank logo patch: fetching logos for ${missingLogoMints.length} ranked tokens`);
-          const logoMap = await dexScreenerEnrich(missingLogoMints);
+          const metaMap = await fetchSolanaMetadata(missingLogoMints);
           let patched = 0;
           for (const token of compactLatest) {
-            const enrichment = logoMap.get(token.mint);
-            if (enrichment?.logoUri) {
-              token.logoUri = enrichment.logoUri;
+            const meta = metaMap.get(token.mint);
+            if (meta?.logoUri) {
+              token.logoUri = meta.logoUri;
               patched++;
             }
           }
