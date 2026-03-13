@@ -4,6 +4,6 @@ import { getHomeData } from "@/server/services/home-data";
 export const revalidate = 45;
 
 export default async function Home() {
-  const data = await getHomeData("1h");
+  const data = await getHomeData("24h");
   return <BabelHome {...data} />;
 }

@@ -19,9 +19,9 @@ export function Navbar() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.04] bg-[rgba(10,10,15,0.85)] backdrop-blur-xl">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-3 sm:h-16 sm:px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/babel.svg" alt="Babel logo" width={100} height={100} className="h-8 w-8 rounded-md sm:h-10 sm:w-10" />
-          <span className="text-xs font-semibold tracking-tight text-white/80 sm:text-sm">Babel</span>
+        <Link href="/" className="flex items-center gap-3">
+          <Image src="/babel.svg" alt="Babel logo" width={120} height={120} className="h-10 w-10 rounded-md sm:h-14 sm:w-14" />
+          <span className="text-lg font-bold tracking-tight text-white/90 sm:text-2xl">Babel</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm md:flex">

@@ -14,7 +14,12 @@ export function HeroSection() {
       </div>
 
       <div className="relative mx-auto max-w-5xl text-center">
+        {/* Large Babel logo and title */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease }}>
+          <div className="flex flex-col items-center justify-center mb-7">
+            <img src="/babel.svg" alt="Babel logo" className="h-24 w-24 sm:h-32 sm:w-32 mb-2" />
+            <span className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-lg">Babel</span>
+          </div>
           <div className="mx-auto mb-5 inline-flex items-center rounded-full border border-cyan-400/15 bg-cyan-500/10 px-3 py-1 text-xs uppercase tracking-[0.16em] text-cyan-400">
             Bags Token Discovery
           </div>
@@ -24,7 +29,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, delay: 0.08, ease }}
-          className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl"
+          className="text-2xl font-extrabold tracking-tight text-white sm:text-4xl md:text-5xl"
         >
           Catch the climb
           <span className="block text-white/75">before the crowd.</span>

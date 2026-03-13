@@ -26,10 +26,24 @@ const breakdownLabels: Array<{ key: keyof RankedToken["scoreBreakdown"]; label: 
   { key: "stabilityQuality", label: "Stability / Quality" },
 ];
 
+function XLogoIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+      <path d="M18.901 1.153h3.68l-8.041 9.188 9.46 12.506h-7.406l-5.804-7.584-6.639 7.584H.468l8.6-9.831L0 1.154h7.594l5.247 6.932zm-1.292 19.49h2.039L6.486 3.24H4.298z" />
+    </svg>
+  );
+}
+
 export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDrawerProps) {
   const [copied, setCopied] = useState<"mint" | "creator" | null>(null);
   const [sparklineWidth, setSparklineWidth] = useState(260);
   const bagsTokenUrl = token ? `https://bags.fm/${encodeURIComponent(token.mint)}` : "";
+  const xShareUrl = token
+    ? `https://x.com/intent/tweet?text=${encodeURIComponent(
+      `${token.symbol} is #${token.rank} in the Babel ${token.bucket} tower with a score of ${token.babelScore.toFixed(1)}. ` +
+      `${token.momentumLabel}. ${token.whyRanked}`,
+    )}&url=${encodeURIComponent(bagsTokenUrl)}`
+    : "";
 
   useEffect(() => {
     const update = () => {
@@ -94,6 +108,26 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
       <SheetContent>
         {!token ? null : (
           <div className="h-full overflow-y-auto pr-1">
+            <div className="mb-3 flex items-center justify-between pr-10 sm:pr-12">
+              <a
+                href={bagsTokenUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-400/[0.06] px-2.5 py-1.5 text-[10px] font-semibold text-cyan-200 transition hover:bg-cyan-400/[0.12] sm:text-xs"
+              >
+                <span>View on Bags.fm</span>
+                <ExternalLink className="h-3 w-3 shrink-0" />
+              </a>
+              <a
+                href={xShareUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.14] bg-white/[0.04] px-2.5 py-1.5 text-[10px] font-semibold text-white transition hover:bg-white/[0.10] sm:text-xs"
+              >
+                <span>Share on</span>
+                <XLogoIcon className="h-3 w-3 shrink-0" />
+              </a>
+            </div>
             <div className="mb-5 border-b border-white/[0.06] pb-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 {token.logoUri ? (
@@ -186,15 +220,6 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
               </div>
 
               <div className="mt-4 space-y-2 text-[10px] text-white/55 sm:text-xs">
-                <a
-                  href={bagsTokenUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex min-w-0 w-full items-center justify-between gap-2 rounded-lg border border-cyan-400/30 bg-cyan-400/[0.06] px-2 py-2 text-left text-[10px] font-semibold text-cyan-200 transition hover:bg-cyan-400/[0.12] sm:px-3 sm:text-xs"
-                >
-                  <span className="truncate">View on Bags.fm</span>
-                  <ExternalLink className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-                </a>
                 <button
                   className="flex min-w-0 w-full items-center justify-between gap-2 rounded-lg border border-white/[0.05] px-2 py-2 text-left font-mono text-[10px] sm:px-3 sm:text-xs"
                   onClick={() => copyAddress(token.mint, "mint")}
