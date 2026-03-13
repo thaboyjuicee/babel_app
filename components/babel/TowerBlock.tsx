@@ -113,7 +113,9 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
                 <MomentumBadge label={token.momentumLabel} />
               </span>
               <div className="flex items-center gap-1.5">
-                <DataSourceBadge dataSource={token.dataSource} />
+                <span className="hidden sm:inline">
+                  <DataSourceBadge dataSource={token.dataSource} />
+                </span>
                 {showAge ? <span className="text-[9px] uppercase tracking-[0.12em] text-white/35 sm:text-[10px]">{formatAge(token.ageMinutes)}</span> : null}
               </div>
             </div>
