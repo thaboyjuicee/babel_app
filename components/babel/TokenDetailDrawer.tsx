@@ -39,11 +39,17 @@ export function TokenDetailDrawer({ token, open, onOpenChange }: TokenDetailDraw
   const [sparklineWidth, setSparklineWidth] = useState(260);
   const bagsTokenUrl = token ? `https://bags.fm/${encodeURIComponent(token.mint)}` : "";
   const xShareUrl = token
-    ? `https://x.com/intent/tweet?text=${encodeURIComponent(
-      `${token.symbol} is #${token.rank} in the Babel ${token.bucket} tower with a score of ${token.babelScore.toFixed(1)}. ` +
-      `${token.momentumLabel}. ${token.whyRanked}`,
-    )}&url=${encodeURIComponent(bagsTokenUrl)}`
-    : "";
+  ? `https://x.com/intent/tweet?text=${encodeURIComponent(
+      `🏗️ Babel Tower Alert\n\n` +
+      `📈 $${token.symbol} is climbing the Babel ${token.bucket} tower\n\n` +
+      `🏆 Rank #${token.rank}\n` +
+      `🔥 Score ${token.babelScore.toFixed(1)}\n` +
+      `⚡ Momentum: ${token.momentumLabel}\n\n` +
+      `Catch the climb before the crowd 👇\n` +
+      `via @babel_xyz\n\n` +
+      `${bagsTokenUrl}`
+    )}`
+  : "";
 
   useEffect(() => {
     const update = () => {
