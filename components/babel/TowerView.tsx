@@ -23,9 +23,10 @@ export function TowerView({ tokens, selectedId, onSelect }: TowerViewProps) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      className="space-y-0.5 rounded-2xl border border-white/[0.05] bg-[#12121A] p-4"
+      className="space-y-0.5 rounded-2xl border border-white/[0.05] bg-[#12121A] p-4 overflow-x-auto"
+      style={{ WebkitOverflowScrolling: 'touch' }}
     >
-      <div className="mb-2 flex items-center justify-center">
+      <div className="mb-2 flex items-center justify-center min-w-[220px]">
         <motion.span
           initial={{ scale: 0.94, opacity: 0.7 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -37,20 +38,22 @@ export function TowerView({ tokens, selectedId, onSelect }: TowerViewProps) {
         </motion.span>
       </div>
 
-      <AnimatePresence mode="popLayout">
-        {tokens.slice(0, 12).map((token, index) => (
-          <TowerBlock
-            key={token.id}
-            token={token}
-            index={index}
-            total={Math.min(tokens.length, 12)}
-            selected={selectedId === token.id}
-            onClick={() => onSelect(token)}
-          />
-        ))}
-      </AnimatePresence>
+      <div className="flex flex-col min-w-[220px] w-full">
+        <AnimatePresence mode="popLayout">
+          {tokens.slice(0, 12).map((token, index) => (
+            <TowerBlock
+              key={token.id}
+              token={token}
+              index={index}
+              total={Math.min(tokens.length, 12)}
+              selected={selectedId === token.id}
+              onClick={() => onSelect(token)}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
 
-      <div className="mt-2 flex items-center justify-center">
+      <div className="mt-2 flex items-center justify-center min-w-[220px]">
         <motion.span
           initial={{ scale: 0.94, opacity: 0.7 }}
           animate={{ scale: 1, opacity: 1 }}

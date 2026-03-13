@@ -25,8 +25,9 @@ function getDirectionStyles(direction: RankedToken["direction"]) {
 }
 
 export function TowerBlock({ token, index, total, selected, onClick }: TowerBlockProps) {
-  const width = 100;
-  const height = 46;
+  // Responsive width/height for mobile
+  const width = typeof window !== 'undefined' && window.innerWidth < 500 ? 100 : 100;
+  const height = typeof window !== 'undefined' && window.innerWidth < 500 ? 54 : 46;
   const opacity = 1;
 
   const compact = false;
@@ -45,7 +46,7 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
   const delay = Math.min(index, 11) * 0.055;
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
       <motion.button
         type="button"
         layout
@@ -72,7 +73,7 @@ export function TowerBlock({ token, index, total, selected, onClick }: TowerBloc
         style={{ width: `${width}%`, height, boxShadow: baseGlowStyle }}
         onClick={onClick}
         className={cn(
-          "group relative mx-auto flex w-full min-w-0 origin-center items-center gap-1 rounded-md border px-1.5 py-1 transition sm:gap-1.5 sm:px-2 sm:py-1.5",
+          "group relative mx-auto flex w-full min-w-0 origin-center items-center gap-2 rounded-md border px-3 py-3 transition sm:gap-2.5 sm:px-4 sm:py-3.5",
           token.rank <= 3 ? "bg-[#16161F]" : "bg-[#111119]",
           selected ? "border-cyan-300/70 shadow-[0_0_20px_rgba(56,189,248,0.28)]" : "border-white/[0.06] hover:border-white/[0.16]",
           selected ? "ring-2 ring-cyan-300/55" : null,
