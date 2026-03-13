@@ -54,6 +54,42 @@ export type ScoreBreakdown = {
   stabilityQuality: number;
 };
 
+export type TokenDataSource = "dexscreener" | "on-chain" | "bags" | "mock";
+
+export const DATA_SOURCE_INFO: Record<
+  TokenDataSource,
+  { label: string; description: string; text: string; bg: string; dot: string }
+> = {
+  dexscreener: {
+    label: "DexScreener",
+    description: "Migrated token — real market data from DexScreener",
+    text: "text-violet-400",
+    bg: "bg-violet-400/10",
+    dot: "bg-violet-400",
+  },
+  "on-chain": {
+    label: "On-chain",
+    description: "Pre-migration token — metadata resolved from Helius / Solana RPC",
+    text: "text-sky-400",
+    bg: "bg-sky-400/10",
+    dot: "bg-sky-400",
+  },
+  bags: {
+    label: "Bags",
+    description: "Pre-migration token — raw data from Bags API only",
+    text: "text-amber-400",
+    bg: "bg-amber-400/10",
+    dot: "bg-amber-400",
+  },
+  mock: {
+    label: "Mock",
+    description: "Simulated demo token — no real market data",
+    text: "text-white/40",
+    bg: "bg-white/[0.05]",
+    dot: "bg-white/30",
+  },
+};
+
 export type RankedToken = {
   id: string;
   mint: string;
@@ -81,6 +117,7 @@ export type RankedToken = {
   trend: number[];
   scoreBreakdown: ScoreBreakdown;
   computedAt: string;
+  dataSource: TokenDataSource;
 };
 
 export type BagsTokenRaw = {
@@ -96,6 +133,7 @@ export type BagsTokenRaw = {
   feeValue: number;
   hasLiveActivity: boolean;
   logoUri?: string;
+  dataSource?: TokenDataSource;
 };
 
 export type TowerResponse = {

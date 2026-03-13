@@ -46,6 +46,7 @@ export class MockBagsProvider implements BagsDataProvider {
         buyerCount: Math.round(8 + base * 0.4 + seeded(i, 17) * 40),
         feeValue: Number((base * 0.018 + seeded(i, 23) * 8).toFixed(2)),
         hasLiveActivity: true,
+        dataSource: "mock" as const,
       };
     });
   }
